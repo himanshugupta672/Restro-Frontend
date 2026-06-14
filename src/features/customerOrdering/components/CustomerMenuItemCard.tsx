@@ -1,5 +1,6 @@
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import {
+  Badge,
   Box,
   Button,
   Card,
@@ -13,6 +14,7 @@ import {
 import type { CustomerMenuItem } from "../types/customerOrdering.types";
 
 interface CustomerMenuItemCardProps {
+  cartQuantity?: number;
   item: CustomerMenuItem;
   onAdd: (item: CustomerMenuItem) => void;
 }
@@ -23,6 +25,7 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 });
 
 export const CustomerMenuItemCard = ({
+  cartQuantity = 0,
   item,
   onAdd,
 }: CustomerMenuItemCardProps) => (
@@ -38,7 +41,7 @@ export const CustomerMenuItemCard = ({
   >
     {item.imageUrl ? (
       <CardMedia
-        alt=""
+        alt={item.name}
         component="img"
         height="180"
         image={item.imageUrl}
@@ -66,25 +69,35 @@ export const CustomerMenuItemCard = ({
           <Typography component="h3" sx={{ fontWeight: 700 }} variant="h6">
             {item.name}
           </Typography>
-          <Typography color="primary" sx={{ fontWeight: 700 }}>
+          <Typography color="primary" sx={{ fontWeight: 700, flexShrink: 0 }}>
             {currencyFormatter.format(item.price)}
           </Typography>
         </Stack>
-        <Typography color="text.secondary">{item.description}</Typography>
-        <Typography color="text.secondary" variant="caption">
-          About {item.prepTimeMinutes} minutes
-        </Typography>
+        {item.description && (
+          <Typography color="text.secondary">{item.description}</Typography>
+        )}
+        {item.prepTimeMinutes > 0 && (
+          <Typography color="text.secondary" variant="caption">
+            About {item.prepTimeMinutes} minutes
+          </Typography>
+        )}
       </Stack>
     </CardContent>
     <CardActions sx={{ p: 2, pt: 0 }}>
-      <Button
-        fullWidth
-        onClick={() => onAdd(item)}
-        startIcon={<AddOutlinedIcon />}
-        variant="contained"
+      <Badge
+        badgeContent={cartQuantity}
+        color="secondary"
+        sx={{ width: "100%" }}
       >
-        Add to cart
-      </Button>
+        <Button
+          fullWidth
+          onClick={() => onAdd(item)}
+          startIcon={<AddOutlinedIcon />}
+          variant={cartQuantity > 0 ? "outlined" : "contained"}
+        >
+          {cartQuantity > 0 ? "Add another" : "Add to cart"}
+        </Button>
+      </Badge>
     </CardActions>
   </Card>
 );

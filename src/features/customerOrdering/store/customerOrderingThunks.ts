@@ -20,7 +20,10 @@ export const loadCustomerMenu = createAppAsyncThunk<CustomerMenuData>(
     try {
       return await getCustomerMenu(signal);
     } catch (error) {
-      return rejectWithValue(toAppAsyncError(error, { notify: false }));
+      if (import.meta.env.DEV) {
+        console.error("[loadCustomerMenu] Failed:", error);
+      }
+      return rejectWithValue(toAppAsyncError(error, { notify: true }));
     }
   },
   {
@@ -38,7 +41,10 @@ export const submitCustomerOrder = createAppAsyncThunk<
     try {
       return await placeCustomerOrder(input);
     } catch (error) {
-      return rejectWithValue(toAppAsyncError(error, { notify: false }));
+      if (import.meta.env.DEV) {
+        console.error("[submitCustomerOrder] Failed:", error);
+      }
+      return rejectWithValue(toAppAsyncError(error, { notify: true }));
     }
   },
   {
@@ -56,6 +62,9 @@ export const refreshCustomerOrder = createAppAsyncThunk<
     try {
       return await trackCustomerOrder(input);
     } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("[refreshCustomerOrder] Failed:", error);
+      }
       return rejectWithValue(toAppAsyncError(error, { notify: false }));
     }
   },

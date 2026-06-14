@@ -47,23 +47,34 @@ export const CustomerCheckoutPage = () => {
     formState: { errors },
   } = useForm<CustomerCheckoutFormValues>({
     defaultValues: {
-      tableNumber: ordering.tableNumber ?? 1,
+      tableNumber: ordering.tableNumber ?? ("" as unknown as number),
+      specialInstructions: "",
     },
     resolver: zodResolver(customerCheckoutSchema),
   });
 
   if (ordering.cart.length === 0) {
     return (
-      <Alert
-        action={
-          <Button color="inherit" component={RouterLink} to={ROUTES.customerCart}>
-            Open cart
-          </Button>
-        }
-        severity="warning"
-      >
-        Add items to your cart before checking out.
-      </Alert>
+      <Stack spacing={3}>
+        <Typography component="h1" variant="h4">
+          Checkout
+        </Typography>
+        <Alert
+          action={
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to={ROUTES.customerMenu}
+              size="small"
+            >
+              Browse menu
+            </Button>
+          }
+          severity="warning"
+        >
+          Your cart is empty. Add items to your cart before checking out.
+        </Alert>
+      </Stack>
     );
   }
 
@@ -103,7 +114,13 @@ export const CustomerCheckoutPage = () => {
         <Alert severity="error">{ordering.placementError.message}</Alert>
       )}
 
-      <Paper elevation={0} sx={{ border: 1, borderColor: "divider", p: 3 }}>
+      <Paper
+        component="form"
+        elevation={0}
+        noValidate
+        onSubmit={handlePlaceOrder}
+        sx={{ border: 1, borderColor: "divider", p: 3 }}
+      >
         <Stack spacing={2}>
           <Controller
             control={control}
@@ -120,13 +137,39 @@ export const CustomerCheckoutPage = () => {
                   "Use the table number displayed at your table."
                 }
                 label="Table number"
-                onChange={(event) => field.onChange(Number(event.target.value))}
-                slotProps={{ htmlInput: { min: 1 } }}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  field.onChange(value === "" ? "" : Number(value));
+                }}
+                slotProps={{ htmlInput: { min: 1, inputMode: "numeric" } }}
                 type="number"
               />
             )}
           />
+
+          <Controller
+            control={control}
+            name="specialInstructions"
+            render={({ field }) => (
+              <TextField
+                {...field}
+                disabled={isSubmitting}
+                fullWidth
+                helperText="Optional: allergies, preferences, special requests."
+                label="Special instructions"
+                multiline
+                rows={2}
+                value={field.value ?? ""}
+              />
+            )}
+          />
+
           <Divider />
+
+          <Typography variant="subtitle2" color="text.secondary">
+            Order summary
+          </Typography>
+
           {ordering.cart.map((item) => (
             <Stack
               direction="row"
@@ -134,9 +177,9 @@ export const CustomerCheckoutPage = () => {
               sx={{ gap: 2, justifyContent: "space-between" }}
             >
               <Typography>
-                {item.quantity} x {item.name}
+                {item.quantity} × {item.name}
               </Typography>
-              <Typography>
+              <Typography sx={{ flexShrink: 0 }}>
                 {currencyFormatter.format(item.price * item.quantity)}
               </Typography>
             </Stack>

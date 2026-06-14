@@ -11,10 +11,13 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Tooltip,
   Typography,
 } from "@mui/material";
+
+import { usePagination } from "@/hooks/usePagination";
 
 import type { Category } from "../types/menu.types";
 
@@ -32,7 +35,18 @@ export const CategoryManager = ({
   onAdd,
   onDelete,
   onEdit,
-}: CategoryManagerProps) => (
+}: CategoryManagerProps) => {
+  const {
+    page,
+    rowsPerPage,
+    rowsPerPageOptions,
+    paginatedItems,
+    totalCount,
+    onPageChange,
+    onRowsPerPageChange,
+  } = usePagination(categories);
+
+  return (
   <Paper
     component="section"
     elevation={0}
@@ -69,61 +83,73 @@ export const CategoryManager = ({
         Add a category before creating menu items.
       </Typography>
     ) : (
-      <TableContainer>
-        <Table aria-label="Menu categories">
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell align="right">Display order</TableCell>
-              <TableCell align="right">Items</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {categories.map((category) => (
-              <TableRow hover key={category.id}>
-                <TableCell>
-                  <Typography sx={{ fontWeight: 600 }}>
-                    {category.name}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">{category.displayOrder}</TableCell>
-                <TableCell align="right">
-                  {menuItemCounts[category.id] ?? 0}
-                </TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Edit category">
-                    <IconButton
-                      aria-label={`Edit ${category.name}`}
-                      onClick={() => onEdit(category)}
-                    >
-                      <EditOutlinedIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip
-                    title={
-                      (menuItemCounts[category.id] ?? 0) > 0
-                        ? "Remove category items before deleting"
-                        : "Delete category"
-                    }
-                  >
-                    <span>
-                      <IconButton
-                        aria-label={`Delete ${category.name}`}
-                        color="error"
-                        disabled={(menuItemCounts[category.id] ?? 0) > 0}
-                        onClick={() => onDelete(category)}
-                      >
-                        <DeleteOutlineIcon />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                </TableCell>
+      <>
+        <TableContainer>
+          <Table aria-label="Menu categories">
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell align="right">Display order</TableCell>
+                <TableCell align="right">Items</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {paginatedItems.map((category) => (
+                <TableRow hover key={category.id}>
+                  <TableCell>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {category.name}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">{category.displayOrder}</TableCell>
+                  <TableCell align="right">
+                    {menuItemCounts[category.id] ?? 0}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Tooltip title="Edit category">
+                      <IconButton
+                        aria-label={`Edit ${category.name}`}
+                        onClick={() => onEdit(category)}
+                      >
+                        <EditOutlinedIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip
+                      title={
+                        (menuItemCounts[category.id] ?? 0) > 0
+                          ? "Remove category items before deleting"
+                          : "Delete category"
+                      }
+                    >
+                      <span>
+                        <IconButton
+                          aria-label={`Delete ${category.name}`}
+                          color="error"
+                          disabled={(menuItemCounts[category.id] ?? 0) > 0}
+                          onClick={() => onDelete(category)}
+                        >
+                          <DeleteOutlineIcon />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          component="div"
+          count={totalCount}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={rowsPerPageOptions}
+        />
+      </>
     )}
   </Paper>
-);
+  );
+};

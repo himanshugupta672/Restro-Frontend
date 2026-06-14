@@ -46,8 +46,7 @@ export const CustomersPage = () => {
       return;
     }
 
-    const request = dispatch(loadCustomers());
-    return () => request.abort();
+    void dispatch(loadCustomers());
   }, [dispatch, user]);
 
   const filteredCustomers = useMemo(

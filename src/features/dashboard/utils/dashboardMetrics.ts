@@ -107,5 +107,4 @@ export const getRecentOrders = (data: DashboardData) =>
     .sort(
       (left, right) =>
         new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
-    )
-    .slice(0, 5);
+    );

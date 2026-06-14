@@ -73,8 +73,7 @@ export const MenuPage = () => {
   );
 
   useEffect(() => {
-    const request = dispatch(loadMenuData());
-    return () => request.abort();
+    void dispatch(loadMenuData());
   }, [dispatch]);
 
   const filteredMenuItems = useMemo(

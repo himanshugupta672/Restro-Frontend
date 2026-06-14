@@ -57,8 +57,7 @@ export const OrdersPage = () => {
       return;
     }
 
-    const request = dispatch(loadOrders({ role: user.role }));
-    return () => request.abort();
+    void dispatch(loadOrders({ role: user.role }));
   }, [dispatch, user]);
 
   const filteredOrders = useMemo(

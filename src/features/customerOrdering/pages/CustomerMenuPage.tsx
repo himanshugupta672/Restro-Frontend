@@ -4,6 +4,7 @@ import {
   Chip,
   CircularProgress,
   Paper,
+  Skeleton,
   Stack,
   Typography,
 } from "@mui/material";
@@ -16,6 +17,7 @@ import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 import { CustomerMenuItemCard } from "../components/CustomerMenuItemCard";
 import {
   cartItemAdded,
+  selectCustomerCart,
   selectCustomerMenu,
 } from "../store/customerOrderingSlice";
 import { loadCustomerMenu } from "../store/customerOrderingThunks";
@@ -23,11 +25,11 @@ import { loadCustomerMenu } from "../store/customerOrderingThunks";
 export const CustomerMenuPage = () => {
   const dispatch = useAppDispatch();
   const menu = useAppSelector(selectCustomerMenu);
+  const cart = useAppSelector(selectCustomerCart);
   const [categoryId, setCategoryId] = useState<number | "all">("all");
 
   useEffect(() => {
-    const request = dispatch(loadCustomerMenu());
-    return () => request.abort();
+    dispatch(loadCustomerMenu());
   }, [dispatch]);
 
   const visibleItems = useMemo(() => {
@@ -40,41 +42,102 @@ export const CustomerMenuPage = () => {
       : menu.data.menuItems.filter((item) => item.categoryId === categoryId);
   }, [categoryId, menu.data]);
 
-  if (menu.status === "pending" && !menu.data) {
+  const getCartQuantity = (itemId: number) => {
+    const cartItem = cart.find((item) => item.id === itemId);
+    return cartItem?.quantity ?? 0;
+  };
+
+  // Loading state
+  if (
+    (menu.status === "idle" || menu.status === "pending") &&
+    !menu.data
+  ) {
     return (
-      <Paper
-        elevation={0}
-        sx={{
-          alignItems: "center",
-          border: 1,
-          borderColor: "divider",
-          display: "flex",
-          justifyContent: "center",
-          minHeight: 360,
-        }}
-      >
-        <Stack spacing={2} sx={{ alignItems: "center" }}>
-          <CircularProgress />
-          <Typography color="text.secondary">Opening your menu...</Typography>
+      <Stack spacing={3}>
+        <Stack spacing={0.5}>
+          <Typography component="h1" variant="h3">
+            What would you like?
+          </Typography>
+          <Typography color="text.secondary">
+            Loading the menu...
+          </Typography>
         </Stack>
-      </Paper>
+        <Stack direction="row" sx={{ gap: 1 }}>
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton
+              key={i}
+              variant="rounded"
+              width={80}
+              height={32}
+              sx={{ borderRadius: 4 }}
+            />
+          ))}
+        </Stack>
+        <Stack
+          sx={{
+            display: "grid",
+            gap: 2,
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              lg: "repeat(3, minmax(0, 1fr))",
+            },
+          }}
+        >
+          {[1, 2, 3].map((i) => (
+            <Paper
+              key={i}
+              elevation={0}
+              sx={{ border: 1, borderColor: "divider" }}
+            >
+              <Skeleton variant="rectangular" height={180} />
+              <Stack spacing={1} sx={{ p: 2 }}>
+                <Skeleton variant="text" width="60%" />
+                <Skeleton variant="text" width="40%" />
+                <Skeleton variant="text" width="80%" />
+                <Skeleton variant="rounded" height={36} />
+              </Stack>
+            </Paper>
+          ))}
+        </Stack>
+      </Stack>
     );
   }
 
+  // Error state
   if (menu.error) {
     return (
-      <Alert
-        action={
-          <Button color="inherit" onClick={() => dispatch(loadCustomerMenu())}>
-            Retry
-          </Button>
-        }
-        severity="error"
-      >
-        {menu.error.message}
-      </Alert>
+      <Stack spacing={3}>
+        <Stack spacing={0.5}>
+          <Typography component="h1" variant="h3">
+            What would you like?
+          </Typography>
+        </Stack>
+        <Alert
+          severity="error"
+          action={
+            <Button
+              color="inherit"
+              onClick={() => dispatch(loadCustomerMenu())}
+              size="small"
+            >
+              Retry
+            </Button>
+          }
+        >
+          {menu.error.message}
+        </Alert>
+        {import.meta.env.DEV && menu.error.code && (
+          <Alert severity="info">
+            Debug: {menu.error.code}
+            {menu.error.status ? ` (HTTP ${menu.error.status})` : ""}
+          </Alert>
+        )}
+      </Stack>
     );
   }
+
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <Stack spacing={3}>
@@ -90,11 +153,16 @@ export const CustomerMenuPage = () => {
             Choose your items now. You will enter your table number at checkout.
           </Typography>
         </Stack>
-        <Button component={RouterLink} to={ROUTES.customerCart} variant="outlined">
-          Review cart
+        <Button
+          component={RouterLink}
+          to={ROUTES.customerCart}
+          variant="outlined"
+        >
+          Review cart{cartItemCount > 0 ? ` (${cartItemCount})` : ""}
         </Button>
       </Stack>
 
+      {/* Category filter chips */}
       <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
         <Chip
           color={categoryId === "all" ? "primary" : "default"}
@@ -113,6 +181,17 @@ export const CustomerMenuPage = () => {
         ))}
       </Stack>
 
+      {/* Refreshing indicator */}
+      {menu.status === "pending" && menu.data && (
+        <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
+          <CircularProgress size={16} />
+          <Typography color="text.secondary" variant="body2">
+            Refreshing menu...
+          </Typography>
+        </Stack>
+      )}
+
+      {/* Menu items grid */}
       {visibleItems.length === 0 ? (
         <Paper elevation={0} sx={{ border: 1, borderColor: "divider", p: 5 }}>
           <Typography color="text.secondary" sx={{ textAlign: "center" }}>
@@ -133,6 +212,7 @@ export const CustomerMenuPage = () => {
         >
           {visibleItems.map((item) => (
             <CustomerMenuItemCard
+              cartQuantity={getCartQuantity(item.id)}
               item={item}
               key={item.id}
               onAdd={(menuItem) => dispatch(cartItemAdded(menuItem))}

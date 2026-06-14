@@ -9,10 +9,20 @@ export const parseApiResponse = <TSchema extends z.ZodType>(
   const result = schema.safeParse(payload);
 
   if (!result.success) {
+    if (import.meta.env.DEV) {
+      console.error(
+        "[parseApiResponse] Schema validation failed.",
+        "\n→ Payload:",
+        payload,
+        "\n→ Issues:",
+        result.error.issues
+      );
+    }
+
     throw new ApiError("The server returned an unexpected response.", {
       code: "INVALID_API_RESPONSE",
       details: {
-        payload: z.treeifyError(result.error),
+        payload: String(result.error),
       },
     });
   }

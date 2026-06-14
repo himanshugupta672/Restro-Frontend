@@ -38,8 +38,7 @@ export const DashboardPage = () => {
       return;
     }
 
-    const request = dispatch(loadDashboard(user.role));
-    return () => request.abort();
+    void dispatch(loadDashboard(user.role));
   }, [dispatch, user]);
 
   if (!user) {
