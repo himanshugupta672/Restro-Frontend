@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import { PageLoader } from "@/components/feedback/PageLoader";
 import { ROUTES } from "@/constants/routes";
 import { AuthLayout } from "@/layouts/AuthLayout";
+import { CustomerLayout } from "@/layouts/CustomerLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/guards/ProtectedRoute";
 import { PublicOnlyRoute } from "@/routes/guards/PublicOnlyRoute";
@@ -19,6 +20,36 @@ const WelcomePage = lazy(() =>
 const LoginPage = lazy(() =>
   import("@/features/auth/pages").then((module) => ({
     default: module.LoginPage,
+  }))
+);
+
+const CustomerMenuPage = lazy(() =>
+  import("@/features/customerOrdering").then((module) => ({
+    default: module.CustomerMenuPage,
+  }))
+);
+
+const CustomerCartPage = lazy(() =>
+  import("@/features/customerOrdering").then((module) => ({
+    default: module.CustomerCartPage,
+  }))
+);
+
+const CustomerCheckoutPage = lazy(() =>
+  import("@/features/customerOrdering").then((module) => ({
+    default: module.CustomerCheckoutPage,
+  }))
+);
+
+const OrderConfirmationPage = lazy(() =>
+  import("@/features/customerOrdering").then((module) => ({
+    default: module.OrderConfirmationPage,
+  }))
+);
+
+const CustomerOrderTrackingPage = lazy(() =>
+  import("@/features/customerOrdering").then((module) => ({
+    default: module.CustomerOrderTrackingPage,
   }))
 );
 
@@ -69,6 +100,23 @@ export const AppRouter = () => (
     <Routes>
       <Route path={ROUTES.home} element={<WelcomePage />} />
 
+      <Route element={<CustomerLayout />}>
+        <Route path={ROUTES.customerMenu} element={<CustomerMenuPage />} />
+        <Route path={ROUTES.customerCart} element={<CustomerCartPage />} />
+        <Route
+          path={ROUTES.customerCheckout}
+          element={<CustomerCheckoutPage />}
+        />
+        <Route
+          path={ROUTES.customerOrderConfirmation}
+          element={<OrderConfirmationPage />}
+        />
+        <Route
+          path={ROUTES.customerOrderTracking}
+          element={<CustomerOrderTrackingPage />}
+        />
+      </Route>
+
       <Route element={<PublicOnlyRoute />}>
         <Route element={<AuthLayout />}>
           <Route path={ROUTES.login} element={<LoginPage />} />
@@ -78,7 +126,10 @@ export const AppRouter = () => (
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path={ROUTES.dashboard} element={<DashboardPage />} />
-          <Route path={ROUTES.orders} element={<OrdersPage />} />
+
+          <Route element={<RoleRoute allowedRoles={routeAccess.orders} />}>
+            <Route path={ROUTES.orders} element={<OrdersPage />} />
+          </Route>
 
           <Route element={<RoleRoute allowedRoles={routeAccess.menu} />}>
             <Route path={ROUTES.menu} element={<MenuPage />} />

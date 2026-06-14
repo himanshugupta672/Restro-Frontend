@@ -9,7 +9,7 @@ const allRoles = [
 export const routeAccess = {
   dashboard: allRoles,
   menu: [USER_ROLES.admin],
-  orders: allRoles,
+  orders: [USER_ROLES.admin, USER_ROLES.chef],
   customers: [USER_ROLES.admin],
   reports: [USER_ROLES.admin],
 } as const satisfies Record<string, readonly UserRole[]>;

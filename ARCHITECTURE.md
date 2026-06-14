@@ -30,8 +30,8 @@ src/
   features/
     auth/             Session contracts, Redux state, and auth pages
     customers/        Customer-owned pages and future business logic
-    dashboard/        Dashboard-owned pages and future business logic
-    menu/             Menu-owned pages and future business logic
+    dashboard/        Role-aware operational overview and dashboard state
+    menu/             Category and menu-item administration
     orders/           Order-owned pages and future business logic
     reports/          Reporting-owned pages and future business logic
   hooks/             Cross-feature React and Redux hooks
@@ -144,7 +144,7 @@ workflow to this infrastructure.
 | `/`             | Public                     |
 | `/login`        | Unauthenticated users only |
 | `/dashboard`    | Admin, Chef, Customer      |
-| `/orders`       | Admin, Chef, Customer      |
+| `/orders`       | Admin, Chef                |
 | `/menu`         | Admin                      |
 | `/customers`    | Admin                      |
 | `/reports`      | Admin                      |
@@ -445,6 +445,258 @@ The current roles are:
 - `Admin`
 - `Chef`
 - `Customer`
+
+## Step 7: dashboard
+
+The dashboard is a complete feature module with its own API composition,
+runtime schemas, Redux state, thunk, presentation components, types, and pure
+metric helpers:
+
+```text
+features/dashboard/
+  api/          Role-aware backend request aggregation
+  components/   Metric cards, status overview, and recent-orders table
+  pages/        Route-level dashboard composition
+  schemas/      Zod validation for every backend response
+  store/        Dashboard slice, selectors, and async thunk
+  types/        Dashboard-owned state and view contracts
+  utils/        Pure metric, status, and sorting calculations
+```
+
+The backend currently exposes dashboard data through existing resource
+controllers rather than one dashboard endpoint. `dashboardApi.ts` provides a
+stable frontend boundary over those endpoints:
+
+- Admin loads menu items, categories, all orders, users, and tables.
+- Chef loads menu items, categories, and the chef-specific order workflow.
+- Customer loads the public menu and category overview without requesting
+  protected operational data.
+
+This role-aware request plan prevents avoidable `403` responses and keeps
+authorization aligned with backend policies. When a dedicated aggregated
+dashboard endpoint is introduced, only `dashboardApi.ts` needs to change; the
+Redux state and UI contract can remain stable.
+
+The dashboard validates all resource responses before storing them. Numeric
+ASP.NET order enums and string enum values are normalized to one frontend
+`OrderStatus` union. Derived metrics remain outside Redux because totals,
+status distributions, and recent-order sorting can be calculated from the
+source data without duplicating state.
+
+The page supports:
+
+- route-level lazy loading;
+- cancellable requests on unmount;
+- duplicate-request prevention;
+- global and local loading feedback;
+- retry and manual refresh;
+- inline errors plus global notifications;
+- responsive metric cards;
+- order status distribution;
+- recent order activity;
+- role-specific content.
+
+## Step 8: menu management
+
+Menu management is an Admin-only vertical feature containing category and menu
+item CRUD:
+
+```text
+features/menu/
+  api/
+    menuApi.ts                 Resource requests and response parsing
+  components/
+    CategoryDialog.tsx         Category create/edit form
+    CategoryManager.tsx        Category table and actions
+    ConfirmDeleteDialog.tsx    Reusable destructive-action confirmation
+    MenuFilters.tsx            Search, category, and availability filters
+    MenuItemDialog.tsx         Menu item create/edit form
+    MenuItemTable.tsx          Responsive menu inventory table
+  pages/
+    MenuPage.tsx               Feature orchestration and local UI state
+  schemas/
+    menuSchemas.ts             API and form validation
+  store/
+    menuSlice.ts               List and mutation state
+    menuThunks.ts              Cancellable CRUD workflows
+  types/
+    menu.types.ts              Feature-owned domain contracts
+  utils/
+    menuFilters.ts             Pure filtering and category lookup helpers
+  index.ts                     Public feature API
+```
+
+Categories belong to the menu feature because they exist to organize menu
+items and share the same administration workflow. A separate category feature
+would introduce cross-feature coordination without providing an independent
+business capability.
+
+The backend returns plain text from create, update, and delete endpoints rather
+than returning the affected resource. Each successful mutation therefore
+reloads categories and menu items before updating Redux. This keeps server
+state authoritative and avoids generating temporary IDs or applying partial
+client-side updates that may differ from persisted values.
+
+The menu slice separates:
+
+- list loading state and list errors;
+- mutation loading state and inline mutation errors;
+- validated category and menu item data.
+
+Expected form and deletion failures use `notify: false` and remain next to the
+operation that caused them. Successful mutations dispatch global notifications.
+The global progress bar continues to track every thunk automatically.
+
+The page owns only transient presentation state such as filters, selected
+records, and open dialogs. Search and filtering are derived locally with pure
+helpers rather than duplicated in Redux.
+
+The module supports:
+
+- category create, update, and guarded deletion;
+- menu item create, update, and delete;
+- React Hook Form with Zod validation;
+- search by item name or description;
+- category and availability filtering;
+- image URL, price, preparation time, and availability fields;
+- responsive summary cards and data tables;
+- loading, empty, error, retry, refresh, and confirmation states;
+- cancellation when the route unmounts;
+- response validation at every API boundary.
+
+## Step 9: order management
+
+Order management is an Admin and Chef feature with role-specific data and
+actions:
+
+```text
+features/orders/
+  api/
+    ordersApi.ts                  Role-aware requests and data enrichment
+  components/
+    ChefOrderActionDialog.tsx     Accept and reject confirmation
+    OrderDetailsDialog.tsx        Itemized order presentation
+    OrderFilters.tsx              Search and status filtering
+    OrdersTable.tsx               Operational order queue
+    OrderStatusChip.tsx           Shared status presentation
+    UpdateOrderStatusDialog.tsx   Admin status workflow
+  pages/
+    OrdersPage.tsx                Feature orchestration and local UI state
+  schemas/
+    orderSchemas.ts               Runtime API validation
+  store/
+    ordersSlice.ts                List and mutation state
+    ordersThunks.ts               Cancellable role-aware workflows
+  types/
+    order.types.ts                Display-ready order contracts
+  utils/
+    orderWorkflow.ts              Filters, permissions, and transitions
+  index.ts                        Public feature API
+```
+
+The API returns order entities containing menu item IDs rather than display
+names. `ordersApi.ts` loads the order queue and public menu concurrently, then
+joins each order item to its menu name. Admin requests also load chefs and
+resolve `ChefId` to a display name. Components receive one display-ready
+contract and do not know which endpoints supplied it.
+
+The backend exposes different queues:
+
+- Admin loads all orders from `/Order`.
+- Chef loads the role-specific queue from `/Chef/orders`.
+
+The Chef service may return pending orders while the chef is available, or the
+chef's assigned active orders while busy. The frontend therefore treats the
+response as authoritative instead of applying its own assignment assumptions.
+
+Chef actions follow the backend workflow:
+
+- Pending or Assigned orders can be accepted or rejected.
+- Accepted orders advance to Preparing.
+- Preparing orders advance to Ready.
+- Ready orders advance to Completed.
+
+Admin can inspect all order details and update operational status. The UI does
+not offer `Assigned` as a manual Admin target because the generic order status
+endpoint does not assign a chef; assignment remains owned by the backend and
+chef workflow.
+
+Order mutations reload the current role's queue before publishing success.
+This captures backend side effects such as chef availability, assignment, and
+queue removal. Expected mutation errors remain inline, while successful
+operations use global notifications.
+
+The module supports:
+
+- role-correct Admin and Chef authorization;
+- validated numeric or string ASP.NET enum responses;
+- order, table, chef, and menu-item search;
+- status filtering;
+- active, awaiting-action, and ready summary metrics;
+- itemized order details and line totals;
+- Chef accept, reject, and preparation progression;
+- Admin status updates;
+- loading, empty, retry, refresh, and inline error states;
+- request cancellation on route unmount.
+
+`types/order.ts` owns the shared order status contract because both Dashboard
+and Orders consume it. This avoids feature-to-feature imports and ensures both
+modules normalize ASP.NET enum values consistently.
+
+## Step 10: customer management
+
+Customer management is an Admin feature built from existing order data. Because
+the QR ordering workflow is guest-based, the frontend treats each table's order
+history as the current customer activity record rather than inventing customer
+accounts that the checkout flow does not collect.
+
+```text
+features/customers/
+  api/
+    customersApi.ts              Existing order data and menu-name enrichment
+  components/
+    CustomerActivityTable.tsx     Guest table summary table
+    CustomerDetailsDialog.tsx     Per-table order history
+    CustomerFilters.tsx           Search and status filtering
+  pages/
+    CustomersPage.tsx             Feature orchestration
+  schemas/
+    customerSchemas.ts            Runtime validation for API responses
+  store/
+    customersSlice.ts             List state and selectors
+    customersThunks.ts            Cancellable load workflow
+  types/
+    customer.types.ts             Feature-owned table activity contracts
+  utils/
+    customerFilters.ts            Pure filtering and metrics
+  index.ts                        Public feature API
+```
+
+`customersApi.ts` loads protected orders from `/Order` and public menu items
+from `/Menu`, then groups orders by `tableNumber`. Components receive a
+display-ready guest activity contract with total orders, active orders,
+completed orders, total spend, average order value, first order, last order,
+and itemized order history.
+
+This keeps the module aligned with the current business flow:
+
+- customers do not log in;
+- table number is captured at checkout;
+- Admin can still inspect ordering history and table activity;
+- future registered customer profiles can be added later without changing the
+  customer ordering flow.
+
+The module supports:
+
+- route-level lazy loading through the existing Customers route;
+- Redux Toolkit async state;
+- response validation at the API boundary;
+- global loading and error feedback through shared thunk infrastructure;
+- KPI cards for served tables, guest orders, active tables, revenue, and
+  average order value;
+- search by table, order, status, or menu item;
+- status filtering;
+- detail dialog with complete order history per table.
 
 ## Quality commands
 

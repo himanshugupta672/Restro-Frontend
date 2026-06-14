@@ -25,9 +25,11 @@ import {
   logoutUser,
   selectCurrentUser,
   selectLogoutStatus,
+  USER_ROLES,
   type UserRole,
 } from "@/features/auth";
 import { ROUTES } from "@/constants/routes";
+import { RestaurantQrPanel } from "@/features/dashboard/components/RestaurantQrPanel";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 import { navigationItems } from "@/routes/navigation";
 
@@ -45,6 +47,7 @@ export const DashboardLayout = () => {
   const visibleItems = user
     ? navigationItems.filter((item) => canAccess(item.allowedRoles, user.role))
     : [];
+  const showRestaurantQr = user?.role === USER_ROLES.admin;
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
@@ -127,6 +130,11 @@ export const DashboardLayout = () => {
                 );
               })}
             </List>
+            {showRestaurantQr && (
+              <Box sx={{ display: { xs: "none", md: "block" }, mt: 2 }}>
+                <RestaurantQrPanel />
+              </Box>
+            )}
           </Box>
 
           <Stack component="main" spacing={3}>

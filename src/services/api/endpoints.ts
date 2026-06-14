@@ -7,9 +7,18 @@ export const API_ENDPOINTS = {
     refreshToken: "/Auth/refresh-token",
   },
   categories: "/Category",
-  chefs: "/Chef",
+  chefs: {
+    acceptOrder: "/Chef/accept-order",
+    orders: "/Chef/orders",
+    rejectOrder: "/Chef/reject-order",
+    root: "/Chef",
+    updateStatus: "/Chef/update-status",
+  },
   menu: "/Menu",
   orders: "/Order",
-  tables: "/Table",
+  tables: {
+    root: "/Table",
+    session: "/Table/session",
+  },
   users: "/User",
 } as const;
