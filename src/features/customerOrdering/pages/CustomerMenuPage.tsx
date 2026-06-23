@@ -9,7 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useSearchParams } from "react-router-dom";
 
 import { ROUTES } from "@/constants/routes";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
@@ -17,6 +17,7 @@ import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 import { CustomerMenuItemCard } from "../components/CustomerMenuItemCard";
 import {
   cartItemAdded,
+  customerTableNumberSet,
   selectCustomerCart,
   selectCustomerMenu,
 } from "../store/customerOrderingSlice";
@@ -27,6 +28,17 @@ export const CustomerMenuPage = () => {
   const menu = useAppSelector(selectCustomerMenu);
   const cart = useAppSelector(selectCustomerCart);
   const [categoryId, setCategoryId] = useState<number | "all">("all");
+  const [searchParams] = useSearchParams();
+  const tableParam = searchParams.get("table");
+
+  useEffect(() => {
+    if (tableParam) {
+      const tableNum = Number(tableParam);
+      if (!isNaN(tableNum) && tableNum > 0) {
+        dispatch(customerTableNumberSet(tableNum));
+      }
+    }
+  }, [tableParam, dispatch]);
 
   useEffect(() => {
     dispatch(loadCustomerMenu());

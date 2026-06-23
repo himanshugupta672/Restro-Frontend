@@ -12,7 +12,7 @@ export {
   sessionEstablished,
 } from "./store/authSlice";
 export { loginUser, logoutUser, restoreSession } from "./store/authThunks";
-export { refreshAccessToken } from "./api/authApi";
+export { refreshAccessToken, signup } from "./api/authApi";
 export { USER_ROLES } from "./types/auth.types";
 export type {
   AuthSession,

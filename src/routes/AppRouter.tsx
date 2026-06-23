@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/routes/guards/ProtectedRoute";
 import { PublicOnlyRoute } from "@/routes/guards/PublicOnlyRoute";
 import { RoleRoute } from "@/routes/guards/RoleRoute";
 import { routeAccess } from "@/routes/routeAccess";
+import { USER_ROLES } from "@/features/auth";
 
 const WelcomePage = lazy(() =>
   import("@/pages/WelcomePage").then((module) => ({
@@ -20,6 +21,12 @@ const WelcomePage = lazy(() =>
 const LoginPage = lazy(() =>
   import("@/features/auth/pages").then((module) => ({
     default: module.LoginPage,
+  }))
+);
+
+const SignUpPage = lazy(() =>
+  import("@/features/auth/pages").then((module) => ({
+    default: module.SignUpPage,
   }))
 );
 
@@ -44,6 +51,18 @@ const CustomerCheckoutPage = lazy(() =>
 const OrderConfirmationPage = lazy(() =>
   import("@/features/customerOrdering").then((module) => ({
     default: module.OrderConfirmationPage,
+  }))
+);
+
+const CustomerLoginPage = lazy(() =>
+  import("@/features/customerOrdering/pages/CustomerLoginPage").then((module) => ({
+    default: module.CustomerLoginPage,
+  }))
+);
+
+const CustomerSignUpPage = lazy(() =>
+  import("@/features/customerOrdering/pages/CustomerSignUpPage").then((module) => ({
+    default: module.CustomerSignUpPage,
   }))
 );
 
@@ -74,6 +93,12 @@ const OrdersPage = lazy(() =>
 const CustomersPage = lazy(() =>
   import("@/features/customers").then((module) => ({
     default: module.CustomersPage,
+  }))
+);
+
+const UsersPage = lazy(() =>
+  import("@/features/users").then((module) => ({
+    default: module.UsersPage,
   }))
 );
 
@@ -120,6 +145,9 @@ export const AppRouter = () => (
       <Route element={<PublicOnlyRoute />}>
         <Route element={<AuthLayout />}>
           <Route path={ROUTES.login} element={<LoginPage />} />
+          <Route path={ROUTES.signup} element={<SignUpPage />} />
+          <Route path={ROUTES.customerLogin} element={<CustomerLoginPage />} />
+          <Route path={ROUTES.customerSignup} element={<CustomerSignUpPage />} />
         </Route>
       </Route>
 
@@ -137,6 +165,10 @@ export const AppRouter = () => (
 
           <Route element={<RoleRoute allowedRoles={routeAccess.customers} />}>
             <Route path={ROUTES.customers} element={<CustomersPage />} />
+          </Route>
+
+          <Route element={<RoleRoute allowedRoles={[USER_ROLES.admin]} />}>
+            <Route path={ROUTES.users} element={<UsersPage />} />
           </Route>
 
           <Route element={<RoleRoute allowedRoles={routeAccess.reports} />}>

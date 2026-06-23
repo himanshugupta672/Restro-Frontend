@@ -27,6 +27,14 @@ const currentUserResponseSchema = z.object({
   userId: z.coerce.number().int().positive(),
 });
 
+export const signup = async (data: unknown) => {
+  const response = await publicApiClient.post<unknown>(
+    `${API_ENDPOINTS.users}/register`,
+    data
+  );
+  return response.data;
+};
+
 export const login = async (credentials: LoginCredentials) => {
   const response = await publicApiClient.post<unknown>(
     API_ENDPOINTS.auth.login,

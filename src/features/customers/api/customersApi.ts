@@ -56,6 +56,7 @@ export const getCustomersData = async (
         tableId: order.tableId,
         tableNumber: order.tableNumber,
         totalAmount: order.totalAmount,
+        customerId: order.customerId ?? null,
       })
     )
     .sort(

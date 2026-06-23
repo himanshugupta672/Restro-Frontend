@@ -3,10 +3,11 @@ import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutlineOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
+import SupervisedUserCircleOutlinedIcon from "@mui/icons-material/SupervisedUserCircleOutlined";
 import type { SvgIconComponent } from "@mui/icons-material";
 
 import { ROUTES } from "@/constants/routes";
-import type { UserRole } from "@/features/auth";
+import { USER_ROLES, type UserRole } from "@/features/auth";
 import { routeAccess } from "@/routes/routeAccess";
 
 export interface NavigationItem {
@@ -40,6 +41,12 @@ export const navigationItems: readonly NavigationItem[] = [
     icon: PeopleOutlineIcon,
     label: "Customers",
     path: ROUTES.customers,
+  },
+  {
+    allowedRoles: [USER_ROLES.admin],
+    icon: SupervisedUserCircleOutlinedIcon,
+    label: "Users",
+    path: ROUTES.users,
   },
   {
     allowedRoles: routeAccess.reports,

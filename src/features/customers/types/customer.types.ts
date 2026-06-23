@@ -18,6 +18,7 @@ export interface CustomerOrderHistory {
   tableId: number;
   tableNumber: number;
   totalAmount: number;
+  customerId?: number | null;
 }
 
 export interface GuestCustomerSummary {

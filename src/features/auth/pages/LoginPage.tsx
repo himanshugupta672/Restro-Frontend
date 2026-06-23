@@ -5,12 +5,20 @@ import {
   Avatar,
   Button,
   CircularProgress,
+  IconButton,
+  InputAdornment,
+  Link,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect } from "react";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { Link as RouterLink } from "react-router-dom";
+
+import { ROUTES } from "@/constants/routes";
 
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 
@@ -27,6 +35,7 @@ export const LoginPage = () => {
   const loginError = useAppSelector(selectLoginError);
   const loginStatus = useAppSelector(selectLoginStatus);
   const isSubmitting = loginStatus === "pending";
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -111,7 +120,22 @@ export const LoginPage = () => {
               fullWidth
               helperText={errors.password?.message}
               label="Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
           )}
         />
@@ -128,6 +152,13 @@ export const LoginPage = () => {
           {isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
       </Stack>
+
+      <Typography align="center" variant="body2">
+        Don't have an account?{" "}
+        <Link component={RouterLink} to={ROUTES.signup}>
+          Create one
+        </Link>
+      </Typography>
     </Stack>
   );
 };

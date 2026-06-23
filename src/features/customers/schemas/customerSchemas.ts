@@ -28,6 +28,7 @@ export const rawCustomerOrderSchema = z.object({
       "Order creation date is invalid."
     ),
   id: z.coerce.number().int().positive(),
+  customerId: z.coerce.number().int().positive().nullable().optional(),
   orderItems: z.array(
     z.object({
       id: z.coerce.number().int().positive(),
@@ -52,3 +53,12 @@ export const customerMenuItemsSchema = z.array(
 );
 
 export type RawCustomerOrder = z.infer<typeof rawCustomerOrderSchema>;
+
+export const editCustomerSchema = z.object({
+  firstName: z.string().trim().min(1, "First name is required"),
+  lastName: z.string().trim().min(1, "Last name is required"),
+  email: z.string().trim().email("Invalid email address"),
+  phoneNumber: z.string().trim().nullable().optional().or(z.literal("")),
+  address: z.string().trim().nullable().optional().or(z.literal("")),
+});
+
