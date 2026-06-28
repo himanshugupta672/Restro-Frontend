@@ -81,7 +81,13 @@ export const OrdersPage = () => {
     void dispatch(loadOrders({ role: user.role }));
   };
 
-  const handleStatusSubmit = async (status: OrderStatus) => {
+  const handleStatusSubmit = async ({
+    chefId,
+    status,
+  }: {
+    chefId: number | null;
+    status: OrderStatus;
+  }) => {
     if (!statusOrder) {
       return false;
     }
@@ -90,6 +96,7 @@ export const OrdersPage = () => {
       changeOrderStatus({
         orderId: statusOrder.id,
         role: user.role,
+        chefId,
         status,
       })
     );
@@ -281,6 +288,8 @@ export const OrdersPage = () => {
       />
 
       <UpdateOrderStatusDialog
+        availableChefs={ordersData.data.availableChefs}
+        chefs={ordersData.data.chefs}
         error={mutationError}
         isSubmitting={isMutating}
         key={statusOrder?.id ?? "no-order"}

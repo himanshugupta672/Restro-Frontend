@@ -26,7 +26,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
+  currency: "INR",
   style: "currency",
 });
 

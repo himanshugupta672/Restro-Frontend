@@ -20,6 +20,7 @@ import {
 import { useEffect, useState, useMemo } from "react";
 
 import { useAppDispatch } from "@/hooks/reduxHooks";
+import { normalizeApiError } from "@/services/api";
 import { notificationEnqueued } from "@/store/appStatus";
 import {
   getUsers,
@@ -29,7 +30,7 @@ import {
 } from "../api/usersApi";
 import { UsersTable } from "../components/UsersTable";
 import { UserFormDialog } from "../components/UserFormDialog";
-import type { User } from "../types/users.types";
+import type { CreateUserInput, UpdateUserInput, User } from "../types/users.types";
 
 export const UsersPage = () => {
   const dispatch = useAppDispatch();
@@ -50,8 +51,11 @@ export const UsersPage = () => {
     try {
       const data = await getUsers(signal);
       setUsers(data);
-    } catch (err: any) {
-      setError(err?.message || "Failed to load users.");
+    } catch (err: unknown) {
+      const apiError = normalizeApiError(err);
+      if (!apiError.isCanceled) {
+        setError(apiError.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -59,7 +63,7 @@ export const UsersPage = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchUsers(controller.signal);
+    void Promise.resolve().then(() => fetchUsers(controller.signal));
     return () => {
       controller.abort();
     };
@@ -81,22 +85,21 @@ export const UsersPage = () => {
   }, [users]);
 
   // Create or Update submit handler
-  const handleFormSubmit = async (data: any) => {
+  const handleFormSubmit = async (data: CreateUserInput | UpdateUserInput) => {
     try {
       if (selectedUser) {
         // Edit User
-        await updateUser(selectedUser.id, data);
+        await updateUser(selectedUser.id, data as UpdateUserInput);
         dispatch(notificationEnqueued("User updated successfully.", "success"));
       } else {
         // Create User
-        await createUser(data);
+        await createUser(data as CreateUserInput);
         dispatch(notificationEnqueued("User created successfully.", "success"));
       }
       setFormOpen(false);
       fetchUsers();
-    } catch (err: any) {
-      const msg = err?.response?.data || err?.message || "Operation failed.";
-      dispatch(notificationEnqueued(msg, "error"));
+    } catch (err: unknown) {
+      dispatch(notificationEnqueued(normalizeApiError(err).message, "error"));
       throw err; // FormDialog handles loading states
     }
   };
@@ -110,9 +113,8 @@ export const UsersPage = () => {
       setDeleteConfirmOpen(false);
       setUserToDelete(null);
       fetchUsers();
-    } catch (err: any) {
-      const msg = err?.response?.data || err?.message || "Failed to delete user.";
-      dispatch(notificationEnqueued(msg, "error"));
+    } catch (err: unknown) {
+      dispatch(notificationEnqueued(normalizeApiError(err).message, "error"));
     }
   };
 

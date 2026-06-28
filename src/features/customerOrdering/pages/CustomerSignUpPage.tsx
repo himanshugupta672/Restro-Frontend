@@ -22,6 +22,7 @@ import { z } from "zod";
 import { ROUTES } from "@/constants/routes";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 import { selectCurrentUser, sessionCleared, sessionEstablished, USER_ROLES } from "@/features/auth";
+import { normalizeApiError } from "@/services/api";
 import { registerCustomerAccount, type CustomerRegisterPayload } from "../api/customerAuthApi";
 
 const customerSignupSchema = z
@@ -97,7 +98,7 @@ export const CustomerSignUpPage = () => {
           user: {
             id: result.userId,
             email: values.email,
-            role: result.role as any,
+            role: result.role,
           },
         })
       );
@@ -106,9 +107,8 @@ export const CustomerSignUpPage = () => {
         const target = table ? `${ROUTES.customerMenu}?table=${table}` : ROUTES.customerMenu;
         navigate(target, { replace: true });
       }, 1500);
-    } catch (err: any) {
-      const msg = err?.response?.data || err?.message || "Registration failed.";
-      setError(msg);
+    } catch (err: unknown) {
+      setError(normalizeApiError(err).message);
     }
   });
 

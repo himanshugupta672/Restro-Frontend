@@ -21,4 +21,5 @@ export const API_ENDPOINTS = {
     session: "/Table/session",
   },
   users: "/User",
+  availableChefs: "/User/chefs/available",
 } as const;

@@ -24,6 +24,7 @@ import { ROUTES } from "@/constants/routes";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 import { selectCurrentUser, sessionCleared, sessionEstablished, USER_ROLES } from "@/features/auth";
 import { login } from "@/features/auth/api/authApi";
+import { normalizeApiError } from "@/services/api";
 import { sendOtpCode, verifyOtpCode } from "../api/customerAuthApi";
 
 export const CustomerLoginPage = () => {
@@ -85,9 +86,8 @@ export const CustomerLoginPage = () => {
 
       const target = table ? `${ROUTES.customerMenu}?table=${table}` : ROUTES.customerMenu;
       navigate(target, { replace: true });
-    } catch (err: any) {
-      const msg = err?.response?.data || err?.message || "Sign in failed.";
-      setError(msg);
+    } catch (err: unknown) {
+      setError(normalizeApiError(err).message);
     } finally {
       setLoading(false);
     }
@@ -111,9 +111,8 @@ export const CustomerLoginPage = () => {
       const response = await sendOtpCode(payload);
       setOtpSent(true);
       setSuccessMessage(response.message);
-    } catch (err: any) {
-      const msg = err?.response?.data || err?.message || "Failed to send verification code.";
-      setError(msg);
+    } catch (err: unknown) {
+      setError(normalizeApiError(err).message);
     } finally {
       setLoading(false);
     }
@@ -141,16 +140,15 @@ export const CustomerLoginPage = () => {
           user: {
             id: result.userId,
             email: otpType === "email" ? otpIdentifier : `${otpIdentifier}@customer.sms`,
-            role: result.role as any,
+            role: result.role,
           },
         })
       );
 
       const target = table ? `${ROUTES.customerMenu}?table=${table}` : ROUTES.customerMenu;
       navigate(target, { replace: true });
-    } catch (err: any) {
-      const msg = err?.response?.data || err?.message || "Verification failed.";
-      setError(msg);
+    } catch (err: unknown) {
+      setError(normalizeApiError(err).message);
     } finally {
       setLoading(false);
     }

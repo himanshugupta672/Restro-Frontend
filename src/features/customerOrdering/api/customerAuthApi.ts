@@ -1,4 +1,5 @@
 import { publicApiClient, API_ENDPOINTS } from "@/services/api";
+import type { UserRole } from "@/features/auth";
 
 export interface SendOtpPayload {
   email?: string;
@@ -32,7 +33,7 @@ export const verifyOtpCode = async (payload: VerifyOtpPayload) => {
   const response = await publicApiClient.post<{
     accessToken: string;
     token: string;
-    role: string;
+    role: UserRole;
     userId: number;
   }>(
     `${API_ENDPOINTS.auth.login.replace("/login", "")}/otp/verify`,
@@ -45,7 +46,7 @@ export const registerCustomerAccount = async (payload: CustomerRegisterPayload) 
   const response = await publicApiClient.post<{
     accessToken: string;
     token: string;
-    role: string;
+    role: UserRole;
     userId: number;
   }>(
     `${API_ENDPOINTS.auth.login.replace("/login", "")}/customer/register`,

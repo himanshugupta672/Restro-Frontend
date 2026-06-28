@@ -8,7 +8,7 @@ import type {
 } from "../types/dashboard.types";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
+  currency: "INR",
   maximumFractionDigits: 0,
   style: "currency",
 });

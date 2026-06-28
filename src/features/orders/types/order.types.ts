@@ -23,7 +23,16 @@ export interface Order {
   totalAmount: number;
 }
 
+export interface ChefOption {
+  id: number;
+  isActive: boolean;
+  name: string;
+  status: string;
+}
+
 export interface OrdersData {
+  availableChefs: ChefOption[];
+  chefs: ChefOption[];
   orders: Order[];
 }
 
@@ -32,6 +41,7 @@ export interface LoadOrdersInput {
 }
 
 export interface UpdateOrderStatusInput extends LoadOrdersInput {
+  chefId?: number | null;
   orderId: number;
   status: OrderStatus;
 }

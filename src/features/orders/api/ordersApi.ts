@@ -12,7 +12,7 @@ import {
   orderMenuItemsSchema,
   rawOrdersSchema,
 } from "../schemas/orderSchemas";
-import type { Order, OrdersData } from "../types/order.types";
+import type { ChefOption, Order, OrdersData } from "../types/order.types";
 
 export const getOrdersData = async (
   role: UserRole,
@@ -24,18 +24,29 @@ export const getOrdersData = async (
       ? API_ENDPOINTS.chefs.orders
       : API_ENDPOINTS.orders;
 
-  const [ordersResponse, menuResponse, chefsResponse] = await Promise.all([
+  const [
+    ordersResponse,
+    menuResponse,
+    chefsResponse,
+    availableChefsResponse,
+  ] = await Promise.all([
     apiClient.get<unknown>(ordersEndpoint, config),
     publicApiClient.get<unknown>(API_ENDPOINTS.menu, config),
     role === USER_ROLES.admin
       ? apiClient.get<unknown>(`${API_ENDPOINTS.users}/chefs`, config)
       : Promise.resolve(null),
+    role === USER_ROLES.admin
+      ? apiClient.get<unknown>(API_ENDPOINTS.availableChefs, config)
+      : Promise.resolve(null),
   ]);
 
   const rawOrders = parseApiResponse(rawOrdersSchema, ordersResponse.data);
   const menuItems = parseApiResponse(orderMenuItemsSchema, menuResponse.data);
-  const chefs = chefsResponse
+  const chefs: ChefOption[] = chefsResponse
     ? parseApiResponse(chefsSchema, chefsResponse.data)
+    : [];
+  const availableChefs: ChefOption[] = availableChefsResponse
+    ? parseApiResponse(chefsSchema, availableChefsResponse.data)
     : [];
   const menuNames = new Map(menuItems.map((item) => [item.id, item.name]));
   const chefNames = new Map(chefs.map((chef) => [chef.id, chef.name]));
@@ -66,13 +77,14 @@ export const getOrdersData = async (
         new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
     );
 
-  return { orders };
+  return { availableChefs, chefs, orders };
 };
 
 export const updateOrderStatus = async (
   role: UserRole,
   orderId: number,
-  status: OrderStatus
+  status: OrderStatus,
+  chefId?: number | null
 ) => {
   const statusValue = ORDER_STATUS_VALUES[status];
 
@@ -83,8 +95,9 @@ export const updateOrderStatus = async (
     return;
   }
 
-  await apiClient.put(`${API_ENDPOINTS.orders}/${orderId}/status`, undefined, {
-    params: { status: statusValue },
+  await apiClient.put(`${API_ENDPOINTS.orders}/${orderId}/status`, {
+    chefId,
+    status: statusValue,
   });
 };
 

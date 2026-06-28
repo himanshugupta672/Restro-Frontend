@@ -19,6 +19,7 @@ import { Controller, useForm } from "react-hook-form";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import { ROUTES } from "@/constants/routes";
+import { normalizeApiError } from "@/services/api";
 import { signup } from "../api/authApi";
 import { signupSchema, type SignupFormValues } from "../schemas/signupSchema";
 
@@ -53,9 +54,8 @@ export const SignUpPage = () => {
       setTimeout(() => {
         navigate(ROUTES.login);
       }, 2000);
-    } catch (err: any) {
-      const msg = err?.response?.data || err?.message || "Registration failed.";
-      setError(msg);
+    } catch (err: unknown) {
+      setError(normalizeApiError(err).message);
     }
   });
 

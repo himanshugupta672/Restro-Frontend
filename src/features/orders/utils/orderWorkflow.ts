@@ -27,6 +27,7 @@ export const getAdminStatusOptions = (
 
   return [
     "Pending",
+    "Assigned",
     "Accepted",
     "Preparing",
     "Ready",

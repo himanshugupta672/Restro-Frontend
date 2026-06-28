@@ -19,19 +19,27 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 
 import {
   adminCreateUserSchema,
   adminUpdateUserSchema,
 } from "../schemas/userSchema";
 import type { User } from "../types/users.types";
+import type { CreateUserInput, UpdateUserInput } from "../types/users.types";
+import type {
+  AdminCreateUserFormValues,
+  AdminUpdateUserFormValues,
+} from "../schemas/userSchema";
 
 interface UserFormDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: CreateUserInput | UpdateUserInput) => Promise<void>;
   user: User | null;
 }
+
+type UserFormValues = AdminCreateUserFormValues | AdminUpdateUserFormValues;
 
 const getRoleValue = (roleStr: User["role"]) => {
   switch (roleStr) {
@@ -61,8 +69,10 @@ export const UserFormDialog = ({
     handleSubmit,
     reset,
     formState: { isSubmitting, errors },
-  } = useForm<any>({
-    resolver: zodResolver(isEdit ? adminUpdateUserSchema : adminCreateUserSchema),
+  } = useForm<UserFormValues>({
+    resolver: zodResolver(
+      isEdit ? adminUpdateUserSchema : adminCreateUserSchema
+    ) as Resolver<UserFormValues>,
     defaultValues: {
       name: "",
       email: "",
@@ -98,14 +108,11 @@ export const UserFormDialog = ({
           confirmPassword: "",
         });
       }
-      // Reset visibility toggles when modal changes state
-      setShowPassword(false);
-      setShowConfirmPassword(false);
     }
   }, [open, user, reset]);
 
   const handleFormSubmit = handleSubmit(async (values) => {
-    const payload = {
+    const payload: CreateUserInput | UpdateUserInput = {
       name: values.name,
       email: values.email,
       phoneNumber: values.phoneNumber || null,
@@ -115,7 +122,11 @@ export const UserFormDialog = ({
     };
 
     if (!isEdit) {
-      (payload as any).confirmPassword = values.confirmPassword;
+      await onSubmit({
+        ...payload,
+        confirmPassword: values.confirmPassword,
+      });
+      return;
     }
 
     await onSubmit(payload);

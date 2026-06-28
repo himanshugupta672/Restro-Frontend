@@ -1,4 +1,5 @@
 import {
+  apiClient,
   API_ENDPOINTS,
   parseApiResponse,
   publicApiClient,
@@ -61,10 +62,12 @@ export const getCustomerMenu = async (
 };
 
 export const placeCustomerOrder = async ({
+  authenticated = false,
   items,
   tableNumber,
-}: PlaceCustomerOrderInput) => {
-  const response = await publicApiClient.post<unknown>(
+}: PlaceCustomerOrderInput & { authenticated?: boolean }) => {
+  const client = authenticated ? apiClient : publicApiClient;
+  const response = await client.post<unknown>(
     API_ENDPOINTS.orders,
     { items, tableNumber }
   );

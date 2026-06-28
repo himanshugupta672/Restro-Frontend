@@ -10,9 +10,12 @@ import {
 } from "@mui/material";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { editCustomerSchema } from "../schemas/customerSchemas";
 import type { RegisteredCustomer, EditCustomerInput } from "../types/adminCustomers.types";
+
+type EditCustomerFormValues = z.infer<typeof editCustomerSchema>;
 
 interface RegisteredCustomerEditDialogProps {
   open: boolean;
@@ -32,7 +35,7 @@ export const RegisteredCustomerEditDialog = ({
     handleSubmit,
     reset,
     formState: { isSubmitting, errors },
-  } = useForm<any>({
+  } = useForm<EditCustomerFormValues>({
     resolver: zodResolver(editCustomerSchema),
     defaultValues: {
       firstName: "",

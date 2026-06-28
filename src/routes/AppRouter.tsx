@@ -90,6 +90,12 @@ const OrdersPage = lazy(() =>
   }))
 );
 
+const TablesPage = lazy(() =>
+  import("@/features/tables").then((module) => ({
+    default: module.TablesPage,
+  }))
+);
+
 const CustomersPage = lazy(() =>
   import("@/features/customers").then((module) => ({
     default: module.CustomersPage,
@@ -161,6 +167,10 @@ export const AppRouter = () => (
 
           <Route element={<RoleRoute allowedRoles={routeAccess.menu} />}>
             <Route path={ROUTES.menu} element={<MenuPage />} />
+          </Route>
+
+          <Route element={<RoleRoute allowedRoles={routeAccess.tables} />}>
+            <Route path={ROUTES.tables} element={<TablesPage />} />
           </Route>
 
           <Route element={<RoleRoute allowedRoles={routeAccess.customers} />}>

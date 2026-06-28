@@ -4,6 +4,7 @@ import PeopleOutlineIcon from "@mui/icons-material/PeopleOutlineOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import SupervisedUserCircleOutlinedIcon from "@mui/icons-material/SupervisedUserCircleOutlined";
+import TableRestaurantOutlinedIcon from "@mui/icons-material/TableRestaurantOutlined";
 import type { SvgIconComponent } from "@mui/icons-material";
 
 import { ROUTES } from "@/constants/routes";
@@ -35,6 +36,12 @@ export const navigationItems: readonly NavigationItem[] = [
     icon: ReceiptLongOutlinedIcon,
     label: "Orders",
     path: ROUTES.orders,
+  },
+  {
+    allowedRoles: routeAccess.tables,
+    icon: TableRestaurantOutlinedIcon,
+    label: "Tables",
+    path: ROUTES.tables,
   },
   {
     allowedRoles: routeAccess.customers,

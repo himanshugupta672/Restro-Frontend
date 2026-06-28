@@ -56,6 +56,8 @@ export const chefsSchema = z.array(
   z.object({
     id: z.coerce.number().int().positive(),
     name: z.string().trim().min(1),
+    status: z.string().trim().min(1).catch("Unknown"),
+    isActive: z.boolean().catch(true),
   })
 );
 

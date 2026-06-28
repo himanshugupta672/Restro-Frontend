@@ -17,6 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { selectCurrentUser, USER_ROLES } from "@/features/auth";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
+import { normalizeApiError } from "@/services/api";
 import { notificationEnqueued } from "@/store/appStatus";
 
 import { CustomerActivityTable } from "../components/CustomerActivityTable";
@@ -40,7 +41,7 @@ import type { RegisteredCustomer, EditCustomerInput } from "../types/adminCustom
 import { filterCustomers, getCustomerMetrics } from "../utils/customerFilters";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
+  currency: "INR",
   maximumFractionDigits: 0,
   style: "currency",
 });
@@ -83,9 +84,10 @@ export const CustomersPage = () => {
     try {
       const data = await getRegisteredCustomers(signal);
       setRegisteredCustomers(data);
-    } catch (err: any) {
-      if (err?.name !== "CanceledError") {
-        setRegisteredError(err?.message || "Failed to load registered customers.");
+    } catch (err: unknown) {
+      const apiError = normalizeApiError(err);
+      if (!apiError.isCanceled) {
+        setRegisteredError(apiError.message);
       }
     } finally {
       setRegisteredLoading(false);
@@ -102,7 +104,7 @@ export const CustomersPage = () => {
 
     // Load registered customers data
     const controller = new AbortController();
-    void fetchRegisteredCustomers(controller.signal);
+    void Promise.resolve().then(() => fetchRegisteredCustomers(controller.signal));
 
     return () => {
       controller.abort();
@@ -129,9 +131,8 @@ export const CustomersPage = () => {
       void fetchRegisteredCustomers();
       // Also reload table activity in case deactivation affects active ordering views
       void dispatch(loadCustomers());
-    } catch (err: any) {
-      const msg = err?.response?.data || err?.message || "Failed to update customer status.";
-      dispatch(notificationEnqueued(msg, "error"));
+    } catch (err: unknown) {
+      dispatch(notificationEnqueued(normalizeApiError(err).message, "error"));
     }
   };
 
@@ -148,9 +149,8 @@ export const CustomersPage = () => {
       setEditOpen(false);
       setEditingRegisteredCustomer(null);
       void fetchRegisteredCustomers();
-    } catch (err: any) {
-      const msg = err?.response?.data || err?.message || "Failed to update customer profile.";
-      dispatch(notificationEnqueued(msg, "error"));
+    } catch (err: unknown) {
+      dispatch(notificationEnqueued(normalizeApiError(err).message, "error"));
       throw err;
     }
   };

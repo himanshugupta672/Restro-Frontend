@@ -37,9 +37,12 @@ export const submitCustomerOrder = createAppAsyncThunk<
   PlaceCustomerOrderInput
 >(
   "customerOrdering/placeOrder",
-  async (input, { rejectWithValue }) => {
+  async (input, { getState, rejectWithValue }) => {
     try {
-      return await placeCustomerOrder(input);
+      return await placeCustomerOrder({
+        ...input,
+        authenticated: Boolean(getState().auth.accessToken),
+      });
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error("[submitCustomerOrder] Failed:", error);

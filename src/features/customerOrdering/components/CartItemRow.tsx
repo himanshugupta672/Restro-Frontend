@@ -18,7 +18,7 @@ interface CartItemRowProps {
 }
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
+  currency: "INR",
   style: "currency",
 });
 

@@ -5,6 +5,7 @@ export const ROUTES = {
   dashboard: "/dashboard",
   menu: "/menu",
   orders: "/orders",
+  tables: "/tables",
   users: "/users",
   customers: "/customers",
   customerCart: "/customer/cart",

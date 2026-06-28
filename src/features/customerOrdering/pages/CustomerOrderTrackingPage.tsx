@@ -19,7 +19,7 @@ import { selectCustomerOrdering } from "../store/customerOrderingSlice";
 import { refreshCustomerOrder } from "../store/customerOrderingThunks";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
+  currency: "INR",
   style: "currency",
 });
 

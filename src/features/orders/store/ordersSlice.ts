@@ -13,6 +13,8 @@ import {
 const initialState: OrdersState = {
   data: {
     data: {
+      availableChefs: [],
+      chefs: [],
       orders: [],
     },
     error: null,

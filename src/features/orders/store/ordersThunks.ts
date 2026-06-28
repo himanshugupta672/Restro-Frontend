@@ -48,10 +48,13 @@ export const changeOrderStatus = createAppAsyncThunk<
   UpdateOrderStatusInput
 >(
   "orders/changeStatus",
-  async ({ orderId, role, status }, { dispatch, rejectWithValue, signal }) => {
+  async (
+    { chefId, orderId, role, status },
+    { dispatch, rejectWithValue, signal }
+  ) => {
     try {
       return await runOrderMutation(
-        () => updateOrderStatus(role, orderId, status),
+        () => updateOrderStatus(role, orderId, status, chefId),
         role,
         `Order #${orderId} moved to ${status}.`,
         signal,
