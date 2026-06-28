@@ -16,14 +16,42 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link as RouterLink,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { z } from "zod";
 
 import { ROUTES } from "@/constants/routes";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
-import { selectCurrentUser, sessionCleared, sessionEstablished, USER_ROLES } from "@/features/auth";
+import {
+  selectCurrentUser,
+  sessionCleared,
+  sessionEstablished,
+  USER_ROLES,
+} from "@/features/auth";
 import { normalizeApiError } from "@/services/api";
-import { registerCustomerAccount, type CustomerRegisterPayload } from "../api/customerAuthApi";
+import {
+  registerCustomerAccount,
+  type CustomerRegisterPayload,
+} from "../api/customerAuthApi";
+import { customerTableNumberSet } from "../store/customerOrderingSlice";
+
+const getCustomerRedirectTarget = (
+  redirect: string | null,
+  table: string | null
+) => {
+  const target = redirect?.startsWith("/customer")
+    ? redirect
+    : ROUTES.customerMenu;
+
+  if (!table || target.includes("?")) {
+    return target;
+  }
+
+  return `${target}?table=${table}`;
+};
 
 const customerSignupSchema = z
   .object({
@@ -45,15 +73,32 @@ export const CustomerSignUpPage = () => {
   const dispatch = useAppDispatch();
   const currentUser = useAppSelector(selectCurrentUser);
 
-  useEffect(() => {
-    if (currentUser && currentUser.role !== USER_ROLES.customer) {
-      dispatch(sessionCleared());
-    }
-  }, [currentUser, dispatch]);
-
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const table = searchParams.get("table");
+  const redirect = searchParams.get("redirect");
+
+  useEffect(() => {
+    if (currentUser) {
+      if (currentUser.role !== USER_ROLES.customer) {
+        dispatch(sessionCleared());
+      } else {
+        const target = getCustomerRedirectTarget(redirect, table);
+        navigate(target, { replace: true });
+      }
+    }
+  }, [currentUser, dispatch, redirect, table, navigate]);
+
+  useEffect(() => {
+    if (!table) {
+      return;
+    }
+
+    const tableNumber = Number(table);
+    if (Number.isInteger(tableNumber) && tableNumber > 0) {
+      dispatch(customerTableNumberSet(tableNumber));
+    }
+  }, [dispatch, table]);
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -104,7 +149,7 @@ export const CustomerSignUpPage = () => {
       );
 
       setTimeout(() => {
-        const target = table ? `${ROUTES.customerMenu}?table=${table}` : ROUTES.customerMenu;
+        const target = getCustomerRedirectTarget(redirect, table);
         navigate(target, { replace: true });
       }, 1500);
     } catch (err: unknown) {
@@ -125,7 +170,11 @@ export const CustomerSignUpPage = () => {
           Sign up to place orders and track your order history.
         </Typography>
         {table && (
-          <Typography color="primary" sx={{ fontWeight: 600 }} variant="subtitle2">
+          <Typography
+            color="primary"
+            sx={{ fontWeight: 600 }}
+            variant="subtitle2"
+          >
             Table: {table}
           </Typography>
         )}
@@ -250,10 +299,16 @@ export const CustomerSignUpPage = () => {
                     <InputAdornment position="end">
                       <IconButton
                         aria-label="toggle password visibility"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         edge="end"
                       >
-                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        {showConfirmPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -266,7 +321,9 @@ export const CustomerSignUpPage = () => {
           disabled={isSubmitting || success}
           fullWidth
           size="large"
-          startIcon={isSubmitting ? <CircularProgress color="inherit" size={18} /> : null}
+          startIcon={
+            isSubmitting ? <CircularProgress color="inherit" size={18} /> : null
+          }
           type="submit"
           variant="contained"
         >
@@ -278,7 +335,9 @@ export const CustomerSignUpPage = () => {
         Already have an account?{" "}
         <Link
           component={RouterLink}
-          to={table ? `${ROUTES.customerLogin}?table=${table}` : ROUTES.customerLogin}
+          to={`${ROUTES.customerLogin}?redirect=${encodeURIComponent(
+            redirect ?? ROUTES.customerMenu
+          )}${table ? `&table=${table}` : ""}`}
         >
           Sign In
         </Link>

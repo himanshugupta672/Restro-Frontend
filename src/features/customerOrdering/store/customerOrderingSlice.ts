@@ -6,6 +6,7 @@ import type {
   CustomerMenuItem,
   CustomerOrderingState,
 } from "../types/customerOrdering.types";
+import { isActiveCustomerOrder } from "../utils/activeOrder";
 import { loadCustomerSession } from "../utils/customerSession";
 import {
   loadCustomerMenu,
@@ -17,7 +18,7 @@ const persistedSession = loadCustomerSession();
 
 const initialState: CustomerOrderingState = {
   cart: persistedSession?.cart ?? [],
-  currentOrder: persistedSession?.currentOrder ?? null,
+  activeOrders: persistedSession?.activeOrders ?? [],
   menu: {
     data: null,
     error: null,
@@ -53,7 +54,9 @@ const customerOrderingSlice = createSlice({
       });
     },
     cartItemDecremented: (state, action: PayloadAction<number>) => {
-      const item = state.cart.find((cartItem) => cartItem.id === action.payload);
+      const item = state.cart.find(
+        (cartItem) => cartItem.id === action.payload
+      );
       if (!item) {
         return;
       }
@@ -83,6 +86,15 @@ const customerOrderingSlice = createSlice({
 
       item.quantity = Math.max(1, action.payload.quantity);
     },
+    cartItemsReordered: (state, action: PayloadAction<CustomerMenuItem[]>) => {
+      // For reordering: we clear the current cart and replace it with the new items, or append them.
+      // A clean drop-in replacement is typically what "Reorder" does in food apps, 
+      // but let's replace or add to make it work. Let's do replacement for simplicity and predictability.
+      state.cart = action.payload.map(item => ({
+        ...item,
+        quantity: (item as any).quantity || 1
+      }));
+    },
     customerOrderErrorCleared: (state) => {
       state.placementError = null;
       state.trackingError = null;
@@ -92,7 +104,7 @@ const customerOrderingSlice = createSlice({
     },
     customerSessionCleared: (state) => {
       state.cart = [];
-      state.currentOrder = null;
+      state.activeOrders = [];
       state.menu = {
         data: null,
         error: null,
@@ -103,6 +115,11 @@ const customerOrderingSlice = createSlice({
       state.tableNumber = null;
       state.trackingError = null;
       state.trackingStatus = "idle";
+    },
+    orderRemoved: (state, action: PayloadAction<number>) => {
+      state.activeOrders = state.activeOrders.filter(
+        (order) => order.orderId !== action.payload
+      );
     },
   },
   extraReducers: (builder) => {
@@ -137,7 +154,8 @@ const customerOrderingSlice = createSlice({
       })
       .addCase(submitCustomerOrder.fulfilled, (state, action) => {
         state.cart = [];
-        state.currentOrder = action.payload;
+        // Add placed order to activeOrders
+        state.activeOrders.push(action.payload);
         state.placementError = null;
         state.placementStatus = "succeeded";
       })
@@ -160,7 +178,15 @@ const customerOrderingSlice = createSlice({
         state.trackingStatus = "pending";
       })
       .addCase(refreshCustomerOrder.fulfilled, (state, action) => {
-        state.currentOrder = action.payload;
+        // Update or add the order in activeOrders
+        const index = state.activeOrders.findIndex(
+          (o) => o.orderId === action.payload.orderId
+        );
+        if (index >= 0) {
+          state.activeOrders[index] = action.payload;
+        } else {
+          state.activeOrders.push(action.payload);
+        }
         state.trackingError = null;
         state.trackingStatus = "succeeded";
       })
@@ -188,9 +214,11 @@ export const {
   cartItemDecremented,
   cartItemRemoved,
   cartItemSetQuantity,
+  cartItemsReordered,
   customerOrderErrorCleared,
   customerTableNumberSet,
   customerSessionCleared,
+  orderRemoved,
 } = customerOrderingSlice.actions;
 
 export const selectCustomerOrdering = (state: RootState) =>
@@ -201,7 +229,9 @@ export const selectCustomerMenu = (state: RootState) =>
   state.customerOrdering.menu;
 export const selectCustomerTableNumber = (state: RootState) =>
   state.customerOrdering.tableNumber;
-export const selectCustomerOrder = (state: RootState) =>
-  state.customerOrdering.currentOrder;
+export const selectCustomerActiveOrders = (state: RootState) =>
+  state.customerOrdering.activeOrders.filter(isActiveCustomerOrder);
+export const selectCustomerOrderById = (orderId: number) => (state: RootState) =>
+  state.customerOrdering.activeOrders.find((o) => o.orderId === orderId) ?? null;
 
 export const customerOrderingReducer = customerOrderingSlice.reducer;

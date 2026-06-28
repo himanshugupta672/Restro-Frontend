@@ -10,11 +10,13 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 
 import type { CustomerMenuItem } from "../types/customerOrdering.types";
 
 interface CustomerMenuItemCardProps {
   cartQuantity?: number;
+  detailsPath: string;
   item: CustomerMenuItem;
   onAdd: (item: CustomerMenuItem) => void;
 }
@@ -26,6 +28,7 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 
 export const CustomerMenuItemCard = ({
   cartQuantity = 0,
+  detailsPath,
   item,
   onAdd,
 }: CustomerMenuItemCardProps) => (
@@ -84,20 +87,25 @@ export const CustomerMenuItemCard = ({
       </Stack>
     </CardContent>
     <CardActions sx={{ p: 2, pt: 0 }}>
-      <Badge
-        badgeContent={cartQuantity}
-        color="secondary"
-        sx={{ width: "100%" }}
-      >
-        <Button
-          fullWidth
-          onClick={() => onAdd(item)}
-          startIcon={<AddOutlinedIcon />}
-          variant={cartQuantity > 0 ? "outlined" : "contained"}
-        >
-          {cartQuantity > 0 ? "Add another" : "Add to cart"}
+      <Stack direction="row" spacing={1} sx={{ width: "100%" }}>
+        <Button component={RouterLink} fullWidth to={detailsPath}>
+          Details
         </Button>
-      </Badge>
+        <Badge
+          badgeContent={cartQuantity}
+          color="secondary"
+          sx={{ width: "100%" }}
+        >
+          <Button
+            fullWidth
+            onClick={() => onAdd(item)}
+            startIcon={<AddOutlinedIcon />}
+            variant={cartQuantity > 0 ? "outlined" : "contained"}
+          >
+            {cartQuantity > 0 ? "Add" : "Add"}
+          </Button>
+        </Badge>
+      </Stack>
     </CardActions>
   </Card>
 );

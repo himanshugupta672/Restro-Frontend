@@ -9,9 +9,13 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { Link as RouterLink, useSearchParams } from "react-router-dom";
+import {
+  Link as RouterLink,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 
-import { ROUTES } from "@/constants/routes";
+import { customerMenuItemDetailsPath, ROUTES } from "@/constants/routes";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 
 import { CustomerMenuItemCard } from "../components/CustomerMenuItemCard";
@@ -28,6 +32,7 @@ export const CustomerMenuPage = () => {
   const menu = useAppSelector(selectCustomerMenu);
   const cart = useAppSelector(selectCustomerCart);
   const [categoryId, setCategoryId] = useState<number | "all">("all");
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const tableParam = searchParams.get("table");
 
@@ -60,19 +65,14 @@ export const CustomerMenuPage = () => {
   };
 
   // Loading state
-  if (
-    (menu.status === "idle" || menu.status === "pending") &&
-    !menu.data
-  ) {
+  if ((menu.status === "idle" || menu.status === "pending") && !menu.data) {
     return (
       <Stack spacing={3}>
         <Stack spacing={0.5}>
           <Typography component="h1" variant="h3">
             What would you like?
           </Typography>
-          <Typography color="text.secondary">
-            Loading the menu...
-          </Typography>
+          <Typography color="text.secondary">Loading the menu...</Typography>
         </Stack>
         <Stack direction="row" sx={{ gap: 1 }}>
           {[1, 2, 3, 4].map((i) => (
@@ -225,6 +225,9 @@ export const CustomerMenuPage = () => {
           {visibleItems.map((item) => (
             <CustomerMenuItemCard
               cartQuantity={getCartQuantity(item.id)}
+              detailsPath={`${customerMenuItemDetailsPath(item.id)}${
+                location.search
+              }`}
               item={item}
               key={item.id}
               onAdd={(menuItem) => dispatch(cartItemAdded(menuItem))}

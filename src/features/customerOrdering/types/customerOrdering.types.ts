@@ -36,17 +36,20 @@ export interface CustomerOrderItem {
 
 export interface CustomerOrder {
   createdAt: string;
+  estimatedReadyAt?: string | null | undefined;
+  estimatedTimeMinutes?: number | null | undefined;
   items: CustomerOrderItem[];
   orderId: number;
   status: OrderStatus;
+  specialInstructions?: string | null;
   tableId: number;
   tableNumber: number;
   totalAmount: number;
 }
 
 export interface CustomerOrderingState {
+  activeOrders: CustomerOrder[];
   cart: CartItem[];
-  currentOrder: CustomerOrder | null;
   menu: AsyncState<CustomerMenuData | null>;
   placementError: AppAsyncError | null;
   placementStatus: AsyncStatus;
@@ -60,6 +63,7 @@ export interface PlaceCustomerOrderInput {
     menuItemId: number;
     quantity: number;
   }>;
+  specialInstructions?: string;
   tableNumber: number;
 }
 
@@ -69,7 +73,7 @@ export interface TrackCustomerOrderInput {
 }
 
 export interface PersistedCustomerOrderingSession {
+  activeOrders: CustomerOrder[];
   cart: CartItem[];
-  currentOrder: CustomerOrder | null;
   tableNumber: number | null;
 }

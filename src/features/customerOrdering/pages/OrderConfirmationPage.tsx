@@ -1,10 +1,12 @@
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import { Alert, Button, Paper, Stack, Typography } from "@mui/material";
-import { Link as RouterLink, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import { customerOrderTrackingPath, ROUTES } from "@/constants/routes";
 import {
-  selectCustomerOrder,
+  selectCustomerActiveOrders,
   selectCustomerTableNumber,
 } from "@/features/customerOrdering/store/customerOrderingSlice";
 import { useAppSelector } from "@/hooks/reduxHooks";
@@ -15,12 +17,28 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 });
 
 export const OrderConfirmationPage = () => {
-  const order = useAppSelector(selectCustomerOrder);
+  const activeOrders = useAppSelector(selectCustomerActiveOrders);
   const tableNumber = useAppSelector(selectCustomerTableNumber);
+  const navigate = useNavigate();
   const { orderId } = useParams();
   const parsedOrderId = Number(orderId);
 
-  if (!order || order.orderId !== parsedOrderId) {
+  const order = activeOrders.find((o) => o.orderId === parsedOrderId) ?? null;
+
+  useEffect(() => {
+    if (order) {
+      toast.success(`Order #${order.orderId} placed successfully!`);
+
+      // Auto-redirect to menu page after 3 seconds
+      const timeoutId = setTimeout(() => {
+        navigate(ROUTES.customerMenu, { replace: true });
+      }, 3000);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [order, navigate]);
+
+  if (!order) {
     return (
       <Alert
         action={
@@ -52,6 +70,9 @@ export const OrderConfirmationPage = () => {
           <Typography color="text.secondary">
             Order #{order.orderId} for Table {order.tableNumber}
           </Typography>
+          <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
+            Redirecting you back to the menu in a few seconds...
+          </Typography>
         </Stack>
         <Typography sx={{ fontWeight: 700 }} variant="h5">
           {currencyFormatter.format(order.totalAmount)}
@@ -65,7 +86,7 @@ export const OrderConfirmationPage = () => {
           Track your order
         </Button>
         <Button component={RouterLink} to={ROUTES.customerMenu}>
-          Return to menu
+          Return to menu now
         </Button>
       </Stack>
     </Paper>

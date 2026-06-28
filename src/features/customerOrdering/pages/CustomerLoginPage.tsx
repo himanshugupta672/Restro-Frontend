@@ -18,27 +18,70 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link as RouterLink,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
 import { ROUTES } from "@/constants/routes";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
-import { selectCurrentUser, sessionCleared, sessionEstablished, USER_ROLES } from "@/features/auth";
+import {
+  selectCurrentUser,
+  sessionCleared,
+  sessionEstablished,
+  USER_ROLES,
+} from "@/features/auth";
 import { login } from "@/features/auth/api/authApi";
 import { normalizeApiError } from "@/services/api";
 import { sendOtpCode, verifyOtpCode } from "../api/customerAuthApi";
+import { customerTableNumberSet } from "../store/customerOrderingSlice";
+
+const getCustomerRedirectTarget = (
+  redirect: string | null,
+  table: string | null
+) => {
+  const target = redirect?.startsWith("/customer")
+    ? redirect
+    : ROUTES.customerMenu;
+
+  if (!table || target.includes("?")) {
+    return target;
+  }
+
+  return `${target}?table=${table}`;
+};
 
 export const CustomerLoginPage = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const currentUser = useAppSelector(selectCurrentUser);
 
-  useEffect(() => {
-    if (currentUser && currentUser.role !== USER_ROLES.customer) {
-      dispatch(sessionCleared());
-    }
-  }, [currentUser, dispatch]);
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const table = searchParams.get("table");
+  const redirect = searchParams.get("redirect");
+
+  useEffect(() => {
+    if (currentUser) {
+      if (currentUser.role !== USER_ROLES.customer) {
+        dispatch(sessionCleared());
+      } else {
+        const target = getCustomerRedirectTarget(redirect, table);
+        navigate(target, { replace: true });
+      }
+    }
+  }, [currentUser, dispatch, redirect, table, navigate]);
+
+  useEffect(() => {
+    if (!table) {
+      return;
+    }
+
+    const tableNumber = Number(table);
+    if (Number.isInteger(tableNumber) && tableNumber > 0) {
+      dispatch(customerTableNumberSet(tableNumber));
+    }
+  }, [dispatch, table]);
 
   const [activeTab, setActiveTab] = useState<number>(0); // 0: Email, 1: OTP
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +127,7 @@ export const CustomerLoginPage = () => {
         })
       );
 
-      const target = table ? `${ROUTES.customerMenu}?table=${table}` : ROUTES.customerMenu;
+      const target = getCustomerRedirectTarget(redirect, table);
       navigate(target, { replace: true });
     } catch (err: unknown) {
       setError(normalizeApiError(err).message);
@@ -95,7 +138,9 @@ export const CustomerLoginPage = () => {
 
   const handleSendOtp = async () => {
     if (!otpIdentifier) {
-      setError(`Please enter your ${otpType === "email" ? "email address" : "phone number"}.`);
+      setError(
+        `Please enter your ${otpType === "email" ? "email address" : "phone number"}.`
+      );
       return;
     }
 
@@ -139,13 +184,16 @@ export const CustomerLoginPage = () => {
           accessToken: result.accessToken,
           user: {
             id: result.userId,
-            email: otpType === "email" ? otpIdentifier : `${otpIdentifier}@customer.sms`,
+            email:
+              otpType === "email"
+                ? otpIdentifier
+                : `${otpIdentifier}@customer.sms`,
             role: result.role,
           },
         })
       );
 
-      const target = table ? `${ROUTES.customerMenu}?table=${table}` : ROUTES.customerMenu;
+      const target = getCustomerRedirectTarget(redirect, table);
       navigate(target, { replace: true });
     } catch (err: unknown) {
       setError(normalizeApiError(err).message);
@@ -167,7 +215,11 @@ export const CustomerLoginPage = () => {
           Welcome! Please sign in to place your order.
         </Typography>
         {table && (
-          <Typography color="primary" sx={{ fontWeight: 600 }} variant="subtitle2">
+          <Typography
+            color="primary"
+            sx={{ fontWeight: 600 }}
+            variant="subtitle2"
+          >
             Table: {table}
           </Typography>
         )}
@@ -190,7 +242,12 @@ export const CustomerLoginPage = () => {
 
       {activeTab === 0 ? (
         // Email/Password Form
-        <Stack component="form" noValidate onSubmit={handleEmailLogin} spacing={2}>
+        <Stack
+          component="form"
+          noValidate
+          onSubmit={handleEmailLogin}
+          spacing={2}
+        >
           <TextField
             autoComplete="email"
             disabled={loading}
@@ -228,7 +285,9 @@ export const CustomerLoginPage = () => {
             disabled={loading}
             fullWidth
             size="large"
-            startIcon={loading ? <CircularProgress color="inherit" size={18} /> : null}
+            startIcon={
+              loading ? <CircularProgress color="inherit" size={18} /> : null
+            }
             type="submit"
             variant="contained"
           >
@@ -237,7 +296,12 @@ export const CustomerLoginPage = () => {
         </Stack>
       ) : (
         // OTP Form
-        <Stack component="form" noValidate onSubmit={handleVerifyOtp} spacing={2}>
+        <Stack
+          component="form"
+          noValidate
+          onSubmit={handleVerifyOtp}
+          spacing={2}
+        >
           <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
             <Button
               fullWidth
@@ -331,7 +395,9 @@ export const CustomerLoginPage = () => {
         Don't have an account?{" "}
         <Link
           component={RouterLink}
-          to={table ? `${ROUTES.customerSignup}?table=${table}` : ROUTES.customerSignup}
+          to={`${ROUTES.customerSignup}?redirect=${encodeURIComponent(
+            redirect ?? ROUTES.customerMenu
+          )}${table ? `&table=${table}` : ""}`}
         >
           Create one
         </Link>

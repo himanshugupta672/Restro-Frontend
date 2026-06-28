@@ -5,8 +5,10 @@ import { PageLoader } from "@/components/feedback/PageLoader";
 import { ROUTES } from "@/constants/routes";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { CustomerLayout } from "@/layouts/CustomerLayout";
+import { CustomerAuthLayout } from "@/layouts/CustomerAuthLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/guards/ProtectedRoute";
+import { CustomerProtectedRoute } from "@/routes/guards/CustomerProtectedRoute";
 import { PublicOnlyRoute } from "@/routes/guards/PublicOnlyRoute";
 import { RoleRoute } from "@/routes/guards/RoleRoute";
 import { routeAccess } from "@/routes/routeAccess";
@@ -42,6 +44,12 @@ const CustomerCartPage = lazy(() =>
   }))
 );
 
+const CustomerMenuItemDetailsPage = lazy(() =>
+  import("@/features/customerOrdering").then((module) => ({
+    default: module.CustomerMenuItemDetailsPage,
+  }))
+);
+
 const CustomerCheckoutPage = lazy(() =>
   import("@/features/customerOrdering").then((module) => ({
     default: module.CustomerCheckoutPage,
@@ -55,20 +63,30 @@ const OrderConfirmationPage = lazy(() =>
 );
 
 const CustomerLoginPage = lazy(() =>
-  import("@/features/customerOrdering/pages/CustomerLoginPage").then((module) => ({
-    default: module.CustomerLoginPage,
-  }))
+  import("@/features/customerOrdering/pages/CustomerLoginPage").then(
+    (module) => ({
+      default: module.CustomerLoginPage,
+    })
+  )
 );
 
 const CustomerSignUpPage = lazy(() =>
-  import("@/features/customerOrdering/pages/CustomerSignUpPage").then((module) => ({
-    default: module.CustomerSignUpPage,
-  }))
+  import("@/features/customerOrdering/pages/CustomerSignUpPage").then(
+    (module) => ({
+      default: module.CustomerSignUpPage,
+    })
+  )
 );
 
 const CustomerOrderTrackingPage = lazy(() =>
   import("@/features/customerOrdering").then((module) => ({
     default: module.CustomerOrderTrackingPage,
+  }))
+);
+
+const CustomerDashboardPage = lazy(() =>
+  import("@/features/customerOrdering").then((module) => ({
+    default: module.CustomerDashboardPage,
   }))
 );
 
@@ -133,6 +151,10 @@ export const AppRouter = () => (
 
       <Route element={<CustomerLayout />}>
         <Route path={ROUTES.customerMenu} element={<CustomerMenuPage />} />
+        <Route
+          path={ROUTES.customerMenuItemDetails}
+          element={<CustomerMenuItemDetailsPage />}
+        />
         <Route path={ROUTES.customerCart} element={<CustomerCartPage />} />
         <Route
           path={ROUTES.customerCheckout}
@@ -146,14 +168,24 @@ export const AppRouter = () => (
           path={ROUTES.customerOrderTracking}
           element={<CustomerOrderTrackingPage />}
         />
+        {/* Protected Customer Routes */}
+        <Route element={<CustomerProtectedRoute />}>
+          <Route
+            path={ROUTES.customerDashboard}
+            element={<CustomerDashboardPage />}
+          />
+        </Route>
+      </Route>
+
+      <Route element={<CustomerAuthLayout />}>
+        <Route path={ROUTES.customerLogin} element={<CustomerLoginPage />} />
+        <Route path={ROUTES.customerSignup} element={<CustomerSignUpPage />} />
       </Route>
 
       <Route element={<PublicOnlyRoute />}>
         <Route element={<AuthLayout />}>
           <Route path={ROUTES.login} element={<LoginPage />} />
           <Route path={ROUTES.signup} element={<SignUpPage />} />
-          <Route path={ROUTES.customerLogin} element={<CustomerLoginPage />} />
-          <Route path={ROUTES.customerSignup} element={<CustomerSignUpPage />} />
         </Route>
       </Route>
 

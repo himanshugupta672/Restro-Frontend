@@ -76,11 +76,7 @@ const customerOrderItemSchema = z
   .object({
     lineTotal: z.coerce.number().nonnegative().catch(0),
     menuItemId: z.coerce.number().int().positive(),
-    name: z
-      .string()
-      .trim()
-      .min(1)
-      .catch("Menu item"),
+    name: z.string().trim().min(1).catch("Menu item"),
     price: z.coerce.number().nonnegative().catch(0),
     quantity: z.coerce.number().int().positive(),
   })
@@ -89,6 +85,14 @@ const customerOrderItemSchema = z
 export const customerOrderSchema = z
   .object({
     createdAt: z.string().catch(new Date().toISOString()),
+    estimatedReadyAt: z.string().nullable().optional().catch(null),
+    estimatedTimeMinutes: z.coerce
+      .number()
+      .int()
+      .positive()
+      .nullable()
+      .optional()
+      .catch(null),
     items: z.array(customerOrderItemSchema).catch([]),
     orderId: z.coerce.number().int().positive(),
     status: orderStatusSchema,
@@ -97,6 +101,7 @@ export const customerOrderSchema = z
     totalAmount: z.coerce.number().nonnegative().catch(0),
   })
   .passthrough();
+export const customerOrdersSchema = z.array(customerOrderSchema);
 
 // ---------- Checkout form ----------
 
@@ -108,9 +113,7 @@ export const customerCheckoutSchema = z.object({
   specialInstructions: z.string().trim(),
 });
 
-export type CustomerCheckoutFormValues = z.infer<
-  typeof customerCheckoutSchema
->;
+export type CustomerCheckoutFormValues = z.infer<typeof customerCheckoutSchema>;
 
 // ---------- Persisted session ----------
 
@@ -126,7 +129,7 @@ const persistedCartItemSchema = z.object({
 });
 
 export const persistedCustomerSessionSchema = z.object({
+  activeOrders: z.array(customerOrderSchema).catch([]),
   cart: z.array(persistedCartItemSchema).catch([]),
-  currentOrder: customerOrderSchema.nullable().catch(null),
   tableNumber: z.coerce.number().int().positive().nullable().catch(null),
 });

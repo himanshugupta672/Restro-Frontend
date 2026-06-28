@@ -11,10 +11,12 @@ export const ROUTES = {
   customerCart: "/customer/cart",
   customerCheckout: "/customer/checkout",
   customerMenu: "/customer/menu",
+  customerMenuItemDetails: "/customer/menu/:itemId",
   customerLogin: "/customer/login",
   customerSignup: "/customer/signup",
   customerOrderConfirmation: "/customer/order-confirmation/:orderId",
   customerOrderTracking: "/customer/orders/:orderId",
+  customerDashboard: "/customer/dashboard",
   reports: "/reports",
   unauthorized: "/unauthorized",
 } as const;
@@ -24,3 +26,6 @@ export const customerOrderConfirmationPath = (orderId: number) =>
 
 export const customerOrderTrackingPath = (orderId: number) =>
   `/customer/orders/${orderId}`;
+
+export const customerMenuItemDetailsPath = (itemId: number) =>
+  `/customer/menu/${itemId}`;

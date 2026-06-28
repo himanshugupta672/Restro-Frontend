@@ -12,10 +12,12 @@ import {
 import { Controller, useForm } from "react-hook-form";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
+import { ROUTES } from "@/constants/routes";
 import {
-  customerOrderConfirmationPath,
-  ROUTES,
-} from "@/constants/routes";
+  selectAuthStatus,
+  selectCurrentUser,
+  USER_ROLES,
+} from "@/features/auth";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 
 import {
@@ -39,8 +41,18 @@ export const CustomerCheckoutPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const ordering = useAppSelector(selectCustomerOrdering);
+  const authStatus = useAppSelector(selectAuthStatus);
+  const currentUser = useAppSelector(selectCurrentUser);
   const total = getCartTotal(ordering);
   const isSubmitting = ordering.placementStatus === "pending";
+  const isCustomerAuthenticated =
+    authStatus === "authenticated" && currentUser?.role === USER_ROLES.customer;
+  const checkoutRedirect = encodeURIComponent(ROUTES.customerCheckout);
+  const tableQuery = ordering.tableNumber
+    ? `&table=${ordering.tableNumber}`
+    : "";
+  const loginUrl = `${ROUTES.customerLogin}?redirect=${checkoutRedirect}${tableQuery}`;
+  const signupUrl = `${ROUTES.customerSignup}?redirect=${checkoutRedirect}${tableQuery}`;
   const {
     control,
     handleSubmit,
@@ -78,7 +90,81 @@ export const CustomerCheckoutPage = () => {
     );
   }
 
-  const handlePlaceOrder = handleSubmit(async ({ tableNumber }) => {
+  if (!isCustomerAuthenticated) {
+    return (
+      <Stack spacing={3}>
+        <Stack spacing={0.5}>
+          <Typography component="h1" variant="h4">
+            Checkout
+          </Typography>
+          <Typography color="text.secondary">
+            Your cart is ready. Sign in or create an account to place the order.
+          </Typography>
+        </Stack>
+
+        <Paper elevation={0} sx={{ border: 1, borderColor: "divider", p: 3 }}>
+          <Stack spacing={2}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Order summary
+            </Typography>
+            {ordering.cart.map((item) => (
+              <Stack
+                direction="row"
+                key={item.id}
+                sx={{ gap: 2, justifyContent: "space-between" }}
+              >
+                <Typography>
+                  {item.quantity} x {item.name}
+                </Typography>
+                <Typography sx={{ flexShrink: 0 }}>
+                  {currencyFormatter.format(item.price * item.quantity)}
+                </Typography>
+              </Stack>
+            ))}
+            <Divider />
+            <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+              <Typography sx={{ fontWeight: 700 }}>Total</Typography>
+              <Typography sx={{ fontWeight: 700 }}>
+                {currencyFormatter.format(total)}
+              </Typography>
+            </Stack>
+          </Stack>
+        </Paper>
+
+        <Paper elevation={0} sx={{ border: 1, borderColor: "divider", p: 3 }}>
+          <Stack spacing={2}>
+            <Typography component="h2" variant="h6">
+              Continue to place order
+            </Typography>
+            <Typography color="text.secondary">
+              We will keep your cart safe and bring you back here after login or
+              registration.
+            </Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <Button
+                component={RouterLink}
+                fullWidth
+                to={loginUrl}
+                variant="contained"
+              >
+                Login
+              </Button>
+              <Button
+                component={RouterLink}
+                fullWidth
+                to={signupUrl}
+                variant="outlined"
+              >
+                Register
+              </Button>
+            </Stack>
+          </Stack>
+        </Paper>
+      </Stack>
+    );
+  }
+
+  const handlePlaceOrder = handleSubmit(async ({ tableNumber, specialInstructions }) => {
     dispatch(customerOrderErrorCleared());
     dispatch(customerTableNumberSet(tableNumber));
 
@@ -89,13 +175,14 @@ export const CustomerCheckoutPage = () => {
           quantity: item.quantity,
         })),
         tableNumber,
+        specialInstructions,
       })
     );
 
     if (submitCustomerOrder.fulfilled.match(result)) {
-      navigate(customerOrderConfirmationPath(result.payload.orderId), {
-        replace: true,
-      });
+      // Navigate to order confirmation screen
+      const createdOrder = result.payload;
+      navigate(`/customer/order-confirmation/${createdOrder.orderId}`, { replace: true });
     }
   });
 
@@ -177,7 +264,7 @@ export const CustomerCheckoutPage = () => {
               sx={{ gap: 2, justifyContent: "space-between" }}
             >
               <Typography>
-                {item.quantity} × {item.name}
+                {item.quantity} x {item.name}
               </Typography>
               <Typography sx={{ flexShrink: 0 }}>
                 {currencyFormatter.format(item.price * item.quantity)}

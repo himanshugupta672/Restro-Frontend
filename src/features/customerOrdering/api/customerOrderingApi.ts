@@ -9,10 +9,12 @@ import {
   customerCategoriesSchema,
   customerMenuItemsSchema,
   customerOrderSchema,
+  customerOrdersSchema,
 } from "../schemas/customerOrderingSchemas";
 import type {
   CustomerMenuData,
   CustomerMenuItem,
+  CustomerOrder,
   PlaceCustomerOrderInput,
   TrackCustomerOrderInput,
 } from "../types/customerOrdering.types";
@@ -64,12 +66,13 @@ export const getCustomerMenu = async (
 export const placeCustomerOrder = async ({
   authenticated = false,
   items,
+  specialInstructions,
   tableNumber,
 }: PlaceCustomerOrderInput & { authenticated?: boolean }) => {
   const client = authenticated ? apiClient : publicApiClient;
   const response = await client.post<unknown>(
     API_ENDPOINTS.orders,
-    { items, tableNumber }
+    { items, tableNumber, specialInstructions }
   );
 
   if (import.meta.env.DEV) {
@@ -93,6 +96,19 @@ export const trackCustomerOrder = async ({
   }
 
   return parseApiResponse(customerOrderSchema, response.data);
+};
+
+export const getCustomerOrderHistory = async (): Promise<CustomerOrder[]> => {
+  const response = await apiClient.get<unknown>(
+    `${API_ENDPOINTS.orders}/my-orders`
+  );
+
+  if (import.meta.env.DEV) {
+    console.log("[getCustomerOrderHistory] Response:", response.data);
+  }
+
+  const rawOrders = unwrapCollection(response.data);
+  return parseApiResponse(customerOrdersSchema, rawOrders);
 };
 
 /**

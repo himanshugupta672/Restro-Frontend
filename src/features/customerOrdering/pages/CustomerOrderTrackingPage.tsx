@@ -28,8 +28,9 @@ export const CustomerOrderTrackingPage = () => {
   const ordering = useAppSelector(selectCustomerOrdering);
   const { orderId } = useParams();
   const parsedOrderId = Number(orderId);
+  const order = ordering.activeOrders.find((o) => o.orderId === parsedOrderId) ?? null;
   const tableNumber =
-    ordering.tableNumber ?? ordering.currentOrder?.tableNumber ?? null;
+    ordering.tableNumber ?? order?.tableNumber ?? null;
   const canTrack =
     Number.isInteger(parsedOrderId) &&
     parsedOrderId > 0 &&
@@ -55,15 +56,11 @@ export const CustomerOrderTrackingPage = () => {
   if (!canTrack || !tableNumber) {
     return (
       <Alert severity="warning">
-        Enter your table number during checkout before tracking this order.
+        Table number is required to track this order. Please browse the menu or checkout.
       </Alert>
     );
   }
 
-  const order =
-    ordering.currentOrder?.orderId === parsedOrderId
-      ? ordering.currentOrder
-      : null;
   const isLoading = ordering.trackingStatus === "pending";
   const refresh = () =>
     dispatch(

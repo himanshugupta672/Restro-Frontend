@@ -1,8 +1,17 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import {
+  Navigate,
+  Outlet,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 
 import { PageLoader } from "@/components/feedback/PageLoader";
 import { ROUTES } from "@/constants/routes";
-import { selectAuthStatus, selectCurrentUser, USER_ROLES } from "@/features/auth";
+import {
+  selectAuthStatus,
+  selectCurrentUser,
+  USER_ROLES,
+} from "@/features/auth";
 import { useAppSelector } from "@/hooks/reduxHooks";
 import { getRedirectPath } from "@/routes/routeState";
 
@@ -10,6 +19,7 @@ export const PublicOnlyRoute = () => {
   const authStatus = useAppSelector(selectAuthStatus);
   const currentUser = useAppSelector(selectCurrentUser);
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   if (authStatus === "checking") {
     return <PageLoader />;
@@ -18,7 +28,11 @@ export const PublicOnlyRoute = () => {
   if (authStatus === "authenticated" && currentUser) {
     const isCustomer = currentUser.role === USER_ROLES.customer;
     const fallback = isCustomer ? ROUTES.customerMenu : ROUTES.dashboard;
-    const targetPath = getRedirectPath(location.state, fallback);
+    const redirectParam = searchParams.get("redirect");
+    const targetPath =
+      isCustomer && redirectParam?.startsWith("/customer")
+        ? redirectParam
+        : getRedirectPath(location.state, fallback);
 
     // Security guard: ensure Customers do not get redirected to backend pages,
     // and staff (Admins/Chefs) do not get redirected to customer ordering portal.
@@ -31,12 +45,7 @@ export const PublicOnlyRoute = () => {
       return <Navigate replace to={ROUTES.dashboard} />;
     }
 
-    return (
-      <Navigate
-        replace
-        to={targetPath}
-      />
-    );
+    return <Navigate replace to={targetPath} />;
   }
 
   return <Outlet />;
