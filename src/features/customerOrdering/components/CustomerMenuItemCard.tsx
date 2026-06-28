@@ -87,22 +87,34 @@ export const CustomerMenuItemCard = ({
       </Stack>
     </CardContent>
     <CardActions sx={{ p: 2, pt: 0 }}>
-      <Stack direction="row" spacing={1} sx={{ width: "100%" }}>
-        <Button component={RouterLink} fullWidth to={detailsPath}>
+      <Stack direction="row" spacing={1.5} sx={{ width: "100%" }}>
+        <Button
+          component={RouterLink}
+          to={detailsPath}
+          sx={{ flex: 1 }}
+        >
           Details
         </Button>
         <Badge
           badgeContent={cartQuantity}
           color="secondary"
-          sx={{ width: "100%" }}
+          sx={{
+            flex: 1,
+            display: "flex",
+            "& .MuiBadge-badge": {
+              right: 4,
+              top: 4,
+            },
+          }}
         >
           <Button
             fullWidth
             onClick={() => onAdd(item)}
             startIcon={<AddOutlinedIcon />}
             variant={cartQuantity > 0 ? "outlined" : "contained"}
+            sx={{ height: "100%" }}
           >
-            {cartQuantity > 0 ? "Add" : "Add"}
+            Add
           </Button>
         </Badge>
       </Stack>
