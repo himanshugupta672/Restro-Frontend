@@ -67,15 +67,37 @@ export const CustomerLayout = () => {
           >
             Cart
           </Button>
-          {isCustomer && (
-            <IconButton
-              component={RouterLink}
-              to="/customer/dashboard"
-              color="inherit"
-              aria-label="Customer dashboard"
-            >
-              <AccountCircleOutlinedIcon />
-            </IconButton>
+          {!currentUser ? (
+            <Stack direction="row" spacing={1}>
+              <Button
+                color="inherit"
+                component={RouterLink}
+                size="small"
+                to={`${ROUTES.customerLogin}?redirect=${encodeURIComponent(ROUTES.customerMenu)}`}
+              >
+                Log In
+              </Button>
+              <Button
+                color="primary"
+                component={RouterLink}
+                size="small"
+                variant="contained"
+                to={`${ROUTES.customerSignup}?redirect=${encodeURIComponent(ROUTES.customerMenu)}`}
+              >
+                Sign Up
+              </Button>
+            </Stack>
+          ) : (
+            isCustomer && (
+              <IconButton
+                component={RouterLink}
+                to="/customer/dashboard"
+                color="inherit"
+                aria-label="Customer dashboard"
+              >
+                <AccountCircleOutlinedIcon />
+              </IconButton>
+            )
           )}
         </Toolbar>
       </AppBar>

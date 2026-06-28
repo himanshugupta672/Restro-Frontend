@@ -45,6 +45,21 @@ const setBearerToken = (
   config.headers.set("Authorization", `Bearer ${accessToken}`);
 };
 
+const attachCsrfToken = (config: InternalAxiosRequestConfig) => {
+  const token = localStorage.getItem("csrfToken");
+  if (token) {
+    config.headers = AxiosHeaders.from(config.headers);
+    config.headers.set("X-CSRF-TOKEN", token);
+  }
+};
+
+const extractCsrfToken = (headers: any) => {
+  const token = headers && (headers["x-csrf-token"] || headers["X-CSRF-Token"] || headers["X-Csrf-Token"]);
+  if (token) {
+    localStorage.setItem("csrfToken", token);
+  }
+};
+
 const shouldExpireSession = (error: unknown) => {
   if (error instanceof ApiError) {
     return error.status === 401 || error.status === 403;
@@ -80,7 +95,16 @@ const refreshAccessToken = async () => {
   return refreshPromise;
 };
 
+// Public client request interceptor
+publicApiClient.interceptors.request.use((config) => {
+  attachCsrfToken(config);
+  return config;
+});
+
+// Authenticated client request interceptor
 apiClient.interceptors.request.use((config) => {
+  attachCsrfToken(config);
+
   if (config.skipAuth) {
     return config;
   }
@@ -94,10 +118,18 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Authenticated client response interceptor
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    extractCsrfToken(response.headers);
+    return response;
+  },
   async (error: AxiosError) => {
     const request = error.config;
+
+    if (error.response) {
+      extractCsrfToken(error.response.headers);
+    }
 
     if (
       error.response?.status !== 401 ||
@@ -121,7 +153,16 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Public client response interceptor
 publicApiClient.interceptors.response.use(
-  (response) => response,
-  (error: unknown) => Promise.reject(normalizeApiError(error))
+  (response) => {
+    extractCsrfToken(response.headers);
+    return response;
+  },
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response) {
+      extractCsrfToken(error.response.headers);
+    }
+    return Promise.reject(normalizeApiError(error));
+  }
 );

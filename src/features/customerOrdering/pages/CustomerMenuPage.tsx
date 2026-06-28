@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   Button,
   Chip,
   CircularProgress,
@@ -16,6 +17,7 @@ import {
 } from "react-router-dom";
 
 import { customerMenuItemDetailsPath, ROUTES } from "@/constants/routes";
+import { selectCurrentUser } from "@/features/auth";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 
 import { CustomerMenuItemCard } from "../components/CustomerMenuItemCard";
@@ -31,6 +33,7 @@ export const CustomerMenuPage = () => {
   const dispatch = useAppDispatch();
   const menu = useAppSelector(selectCustomerMenu);
   const cart = useAppSelector(selectCustomerCart);
+  const currentUser = useAppSelector(selectCurrentUser);
   const [categoryId, setCategoryId] = useState<number | "all">("all");
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -173,6 +176,52 @@ export const CustomerMenuPage = () => {
           Review cart{cartItemCount > 0 ? ` (${cartItemCount})` : ""}
         </Button>
       </Stack>
+
+      {!currentUser && (
+        <Paper
+          elevation={0}
+          sx={{
+            background: "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)",
+            border: 1,
+            borderColor: "primary.light",
+            borderRadius: 2,
+            p: 2.5,
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
+          >
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "primary.dark" }}>
+                Ordering for the first time?
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Log in or sign up now to save your order history and checkout faster!
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <Button
+                component={RouterLink}
+                size="small"
+                to={`${ROUTES.customerLogin}?redirect=${encodeURIComponent(ROUTES.customerMenu)}`}
+                variant="outlined"
+              >
+                Log In
+              </Button>
+              <Button
+                component={RouterLink}
+                size="small"
+                to={`${ROUTES.customerSignup}?redirect=${encodeURIComponent(ROUTES.customerMenu)}`}
+                variant="contained"
+              >
+                Sign Up
+              </Button>
+            </Stack>
+          </Stack>
+        </Paper>
+      )}
 
       {/* Category filter chips */}
       <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>

@@ -40,7 +40,7 @@ export const CustomerCartPage = () => {
             <Typography component="h2" variant="h6">
               Your cart is empty
             </Typography>
-            <Button component={RouterLink} to={ROUTES.customerMenu} variant="contained">
+            <Button component={RouterLink} to={ROUTES.customerMenu} variant="contained" replace>
               Browse menu
             </Button>
           </Stack>
@@ -72,7 +72,7 @@ export const CustomerCartPage = () => {
                 </Typography>
               </Stack>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                <Button component={RouterLink} fullWidth to={ROUTES.customerMenu}>
+                <Button component={RouterLink} fullWidth to={ROUTES.customerMenu} replace>
                   Add more items
                 </Button>
                 <Button

@@ -77,6 +77,15 @@ export const CustomerOrderTrackingPage = () => {
         sx={{ gap: 2, justifyContent: "space-between" }}
       >
         <Stack spacing={0.5}>
+          <Button
+            component={RouterLink}
+            to={ROUTES.customerMenu}
+            replace
+            sx={{ alignSelf: "flex-start", mb: 1, p: 0, textTransform: "none", minWidth: 0 }}
+            size="small"
+          >
+            &larr; Back to Menu
+          </Button>
           <Typography component="h1" variant="h4">
             Track order #{parsedOrderId}
           </Typography>
@@ -130,7 +139,7 @@ export const CustomerOrderTrackingPage = () => {
             <Divider />
             <OrderTrackingTimeline status={order.status} />
             <Divider />
-            <Button component={RouterLink} to={ROUTES.customerMenu}>
+            <Button component={RouterLink} to={ROUTES.customerMenu} replace>
               View menu
             </Button>
           </Stack>

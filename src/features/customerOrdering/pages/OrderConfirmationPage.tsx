@@ -82,10 +82,11 @@ export const OrderConfirmationPage = () => {
           to={customerOrderTrackingPath(order.orderId)}
           variant="contained"
           state={{ tableNumber }}
+          replace
         >
           Track your order
         </Button>
-        <Button component={RouterLink} to={ROUTES.customerMenu}>
+        <Button component={RouterLink} to={ROUTES.customerMenu} replace>
           Return to menu now
         </Button>
       </Stack>
